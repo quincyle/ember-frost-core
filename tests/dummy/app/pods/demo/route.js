@@ -1,9 +1,4 @@
-import Ember from 'ember'
-const {Route} = Ember
-import routes from '../../demo-routes'
+import Route from '@ember/routing/route'
 
 export default Route.extend({
-  model () {
-    return Promise.resolve({routes})
-  }
 })

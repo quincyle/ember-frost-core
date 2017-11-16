@@ -1,25 +1,21 @@
 /**
  * Component definition for the frost-radio-button component
  */
-import Ember from 'ember'
-const {$, Component, get, typeOf} = Ember
-import computed from 'ember-computed-decorators'
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
 
 import layout from '../templates/components/frost-radio-button'
 import {cloneEvent} from '../utils'
+import Component from './frost-component'
+import {computed, readOnly} from 'ember-decorators/object'
+import {PropTypes} from 'ember-prop-types'
+import $ from 'jquery'
 
-export default Component.extend(PropTypeMixin, {
+export default Component.extend({
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
 
   attributeBindings: [
     'tabindex'
-  ],
-
-  classNames: [
-    'frost-radio-button'
   ],
 
   classNameBindings: [
@@ -33,11 +29,6 @@ export default Component.extend(PropTypeMixin, {
 
   // == PropTypes =============================================================
 
-  /**
-   * Properties for this component. Options are expected to be (potentially)
-   * passed in to the component. State properties are *not* expected to be
-   * passed in/overwritten.
-   */
   propTypes: {
     // options
     // Group properties
@@ -47,32 +38,21 @@ export default Component.extend(PropTypeMixin, {
     // Radio properties
     checked: PropTypes.bool,
     disabled: PropTypes.bool,
-    hook: PropTypes.string,
     label: PropTypes.string,
     required: PropTypes.bool,
     size: PropTypes.string,
     value: PropTypes.string.isRequired,
-    onChange: PropTypes.func,
+    onChange: PropTypes.func
 
     // state
-
-    // keywords
-    attributeBinding: PropTypes.arrayOf(PropTypes.string),
-    classNameBinding: PropTypes.arrayOf(PropTypes.string),
-    classNames: PropTypes.arrayOf(PropTypes.string),
-    layout: PropTypes.any
   },
 
   getDefaultProps () {
     return {
-      // Group properties
-      groupId: null,
-      selectedValue: null,
       // Radio properties
       disabled: false,
       required: false,
-      size: 'small',
-      value: null
+      size: 'small'
     }
   },
 
@@ -81,25 +61,28 @@ export default Component.extend(PropTypeMixin, {
   @computed('selectedValue', 'value')
   /**
    * Determine checked state
+   * TODO: make compued property readOnly
    * @param {String} selectedValue - which radio button in the group is selected
    * @param {String} value - radio button value
    * @returns {Boolean} whether this radio button is checked or not
    */
-  checked (selectedValue, value) {
+  checked (selectedValue, value) { // eslint-disable-line
     return selectedValue === value
   },
 
   @computed('receivedHook')
   /**
    * Determine hook name for radio-button
+   * TODO: make computed property readOnly
    * @param {String} receivedHook - hook received from parent
    * @returns {String} the concatenated hook name
    */
-  hook (receivedHook) {
+  hook (receivedHook) { // eslint-disable-line
     const radioGroupHook = receivedHook || ''
     return `${radioGroupHook}-button`
   },
 
+  @readOnly
   @computed('value')
   /**
    * Determine hook qualifiers for radio-button
@@ -112,6 +95,7 @@ export default Component.extend(PropTypeMixin, {
     }
   },
 
+  @readOnly
   @computed('disabled')
   /**
    * Determine tabindex value
@@ -124,13 +108,12 @@ export default Component.extend(PropTypeMixin, {
 
   // == Functions ===============================================================
 
-  // FIXME: jsdoc
   _changeTarget (event, target) {
     const e = cloneEvent(event, target)
 
-    const groupdId = get(this, 'groupId')
+    const groupdId = this.get('groupId')
     if (groupdId) {
-      e.target.id = get(this, 'groupId')
+      e.target.id = this.get('groupId')
     }
 
     return e
@@ -138,25 +121,22 @@ export default Component.extend(PropTypeMixin, {
 
   // == Events ===============================================================
   /* eslint-disable complexity */
-  // FIXME: jsdoc
   keyPress (event) {
     if (event.keyCode === 13 || event.keyCode === 32) {
-      if (get(this, 'disabled') || get(this, 'checked')) {
+      if (this.get('disabled') || this.get('checked')) {
         return
       }
-      const onChange = get(this, 'onChange')
-      if (onChange && typeOf(onChange === 'function')) {
-        onChange(this._changeTarget(event, $(event.target).find('input')[0]))
+
+      if (this.onChange) {
+        this.onChange(this._changeTarget(event, $(event.target).find('input')[0]))
       }
     }
   },
   /* eslint-enable complexity */
 
-  // FIXME: jsdoc
   change (event) {
-    const onChange = get(this, 'onChange')
-    if (onChange && typeOf(onChange === 'function')) {
-      onChange(this._changeTarget(event, event.target))
+    if (this.onChange) {
+      this.onChange(this._changeTarget(event, event.target))
     }
   }
 })

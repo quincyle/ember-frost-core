@@ -1,9 +1,11 @@
-var routingConfig = require('./routing')
+/* eslint-env node */
+'use strict'
+
 module.exports = function (environment) {
-  var ENV = {
+  let ENV = {
     modulePrefix: 'dummy',
     podModulePrefix: 'dummy/pods',
-    environment: environment,
+    environment,
     rootURL: '/',
     locationType: 'hash',
     EmberENV: {
@@ -13,15 +15,24 @@ module.exports = function (environment) {
       },
       iconPacks: {
         inline: true
+      },
+      EXTEND_PROTOTYPES: {
+        // Prevent Ember Data from overriding Date.parse.
+        Date: false
       }
     },
+
     APP: {
       // Here you can pass flags/options to your application instance
       // when it is created
-      routingConfig: routingConfig
     },
     'ember-cli-notifications': {
       autoClear: false
+    },
+    'ember-prop-types': {
+      spreadProperty: 'options',
+      throwErrors: true,
+      validateOnUpdate: true
     }
   }
 
@@ -35,8 +46,11 @@ module.exports = function (environment) {
 
   if (environment === 'test') {
     // Testem prefers this...
-    ENV.rootURL = '/'
     ENV.locationType = 'none'
+
+    ENV['ember-cli-mirage'] = {
+      enabled: true
+    }
 
     // keep test console output quieter
     ENV.APP.LOG_ACTIVE_GENERATION = false

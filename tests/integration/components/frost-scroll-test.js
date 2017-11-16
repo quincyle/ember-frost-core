@@ -1,93 +1,190 @@
-/* jshint expr:true */
-import { expect } from 'chai'
-import {
-  describeComponent,
-  it
-} from 'ember-mocha'
+import {expect} from 'chai'
+import {$hook} from 'ember-hook'
+import {integration} from 'ember-test-utils/test-support/setup-component-test'
 import hbs from 'htmlbars-inline-precompile'
+import {describe, it} from 'mocha'
 import sinon from 'sinon'
 
-describeComponent(
-  'frost-scroll',
-  'Integration: FrostScrollComponent',
-  {
-    integration: true
-  },
-  function () {
-    it('onScrollUp closure action is called', function () {
-      const externalActionSpy = sinon.spy()
+const test = integration('frost-scroll')
+describe(test.label, function () {
+  test.setup()
 
-      this.on('externalAction', externalActionSpy)
+  it('should call onScrollUp closure action', function () {
+    const externalActionSpy = sinon.spy()
 
-      this.render(hbs`
-        {{frost-scroll
-          onScrollUp=(action 'externalAction')
-        }}
-      `)
+    this.on('externalAction', externalActionSpy)
 
-      this.$('.frost-scroll').trigger('ps-scroll-up')
+    this.render(hbs`
+      {{frost-scroll
+        hook='myScroll'
+        onScrollUp=(action 'externalAction')
+      }}
+    `)
 
-      expect(
-        externalActionSpy.called,
-        'onScrollUp closure action called on ps-scroll-up'
-      ).to.be.true
-    })
+    this.$('.frost-scroll').trigger('ps-scroll-up')
 
-    it('onScrollDown closure action is called', function () {
-      const externalActionSpy = sinon.spy()
+    expect(
+      externalActionSpy.called,
+      'onScrollUp closure action called on ps-scroll-up'
+    ).to.equal(true)
+  })
 
-      this.on('externalAction', externalActionSpy)
+  it('should call onScrollDown closure action', function () {
+    const externalActionSpy = sinon.spy()
 
-      this.render(hbs`
-        {{frost-scroll
-          onScrollDown=(action 'externalAction')
-        }}
-      `)
+    this.on('externalAction', externalActionSpy)
 
-      this.$('.frost-scroll').trigger('ps-scroll-down')
+    this.render(hbs`
+      {{frost-scroll
+        hook='myScroll'
+        onScrollDown=(action 'externalAction')
+      }}
+    `)
 
-      expect(
-        externalActionSpy.called,
-        'onScrollDown closure action called on ps-scroll-down'
-      ).to.be.true
-    })
+    this.$('.frost-scroll').trigger('ps-scroll-down')
 
-    it('onScrollYStart closure action is called', function () {
-      const externalActionSpy = sinon.spy()
+    expect(
+      externalActionSpy.called,
+      'onScrollDown closure action called on ps-scroll-down'
+    ).to.equal(true)
+  })
 
-      this.on('externalAction', externalActionSpy)
+  it('should call onScrollYStart closure action', function () {
+    const externalActionSpy = sinon.spy()
 
-      this.render(hbs`
-        {{frost-scroll
-          onScrollYStart=(action 'externalAction')
-        }}
-      `)
+    this.on('externalAction', externalActionSpy)
 
-      this.$('.frost-scroll').trigger('ps-y-reach-start')
+    this.render(hbs`
+      {{frost-scroll
+        hook='myScroll'
+        onScrollYStart=(action 'externalAction')
+      }}
+    `)
 
-      expect(
-        externalActionSpy.called,
-        'onScrollYStart closure action called on ps-y-reach-start'
-      ).to.be.true
-    })
+    this.$('.frost-scroll').trigger('ps-y-reach-start')
 
-    it('onScrollYEnd closure action is called', function () {
-      const externalActionSpy = sinon.spy()
+    expect(
+      externalActionSpy.called,
+      'onScrollYStart closure action called on ps-y-reach-start'
+    ).to.equal(true)
+  })
 
-      this.on('externalAction', externalActionSpy)
+  it('should call onScrollYEnd closure action', function () {
+    const externalActionSpy = sinon.spy()
 
-      this.render(hbs`
-        {{frost-scroll
-          onScrollYEnd=(action 'externalAction')
-        }}
-      `)
+    this.on('externalAction', externalActionSpy)
 
-      this.$('.frost-scroll').trigger('ps-y-reach-end')
+    this.render(hbs`
+      {{frost-scroll
+        hook='myScroll'
+        onScrollYEnd=(action 'externalAction')
+      }}
+    `)
 
-      expect(
-        externalActionSpy.called,
-        'onScrollYEnd closure action called on ps-y-reach-end'
-      ).to.be.true
-    })
-  }
-)
+    this.$('.frost-scroll').trigger('ps-y-reach-end')
+
+    expect(
+      externalActionSpy.called,
+      'onScrollYEnd closure action called on ps-y-reach-end'
+    ).to.equal(true)
+  })
+
+  it('should call onScrollX closure action', function () {
+    const externalActionSpy = sinon.spy()
+
+    this.on('externalAction', externalActionSpy)
+
+    this.render(hbs`
+      {{frost-scroll
+        hook='myScroll'
+        onScrollX=(action 'externalAction')
+      }}
+    `)
+
+    this.$('.frost-scroll').trigger('ps-scroll-x')
+
+    expect(
+      externalActionSpy.called,
+      'onScrollX closure action called on ps-scroll-x'
+    ).to.equal(true)
+  })
+
+  it('should call onScrollRight closure action', function () {
+    const externalActionSpy = sinon.spy()
+
+    this.on('externalAction', externalActionSpy)
+
+    this.render(hbs`
+      {{frost-scroll
+        hook='myScroll'
+        onScrollRight=(action 'externalAction')
+      }}
+    `)
+
+    this.$('.frost-scroll').trigger('ps-scroll-right')
+
+    expect(
+      externalActionSpy.called,
+      'onScrollRight closure action called on ps-scroll-right'
+    ).to.equal(true)
+  })
+
+  it('should call onScrollLeft closure action', function () {
+    const externalActionSpy = sinon.spy()
+
+    this.on('externalAction', externalActionSpy)
+
+    this.render(hbs`
+      {{frost-scroll
+        hook='myScroll'
+        onScrollLeft=(action 'externalAction')
+      }}
+    `)
+
+    this.$('.frost-scroll').trigger('ps-scroll-left')
+
+    expect(
+      externalActionSpy.called,
+      'onScrollLeft closure action called on ps-scroll-left'
+    ).to.equal(true)
+  })
+
+  it('should render using spread', function () {
+    const hook = 'my-hook'
+
+    this.set('hook', hook)
+
+    this.render(hbs`
+      {{frost-scroll
+        options=(hash
+          hook=hook
+        )
+      }}
+    `)
+
+    expect(
+      $hook(hook).hasClass('frost-scroll'),
+      'scroll has been rendered'
+    ).to.equal(true)
+  })
+
+  it('should call onMouseEnter closure action', function () {
+    const externalActionSpy = sinon.spy()
+
+    this.on('externalAction', externalActionSpy)
+
+    this.render(hbs`
+      {{frost-scroll
+        hook='myScroll'
+        onMouseEnter=(action 'externalAction')
+      }}
+    `)
+
+    this.$('.frost-scroll').trigger('mouseenter')
+
+    expect(
+      externalActionSpy.called,
+      'onMouseEnter closure action called on mouseenter'
+    ).to.equal(true)
+  })
+})

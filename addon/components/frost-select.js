@@ -1,14 +1,20 @@
 /**
  * Component definition for frost-select component
  */
-import Ember from 'ember'
-const {$, Component, get, run, typeOf} = Ember
-import computed, {readOnly} from 'ember-computed-decorators'
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
+
+import {on} from '@ember/object/evented'
+import {run} from '@ember/runloop'
+import {htmlSafe} from '@ember/string'
+import {typeOf} from '@ember/utils'
 
 import layout from '../templates/components/frost-select'
-
 import keyCodes from '../utils/key-codes'
+import Component from './frost-component'
+import {task, timeout} from 'ember-concurrency'
+import {computed, readOnly} from 'ember-decorators/object'
+import {PropTypes} from 'ember-prop-types'
+import $ from 'jquery'
+
 const {DOWN_ARROW, SPACE, UP_ARROW} = keyCodes
 
 /**
@@ -43,13 +49,17 @@ function compareSelectedValues (a, b) {
   return a === b
 }
 
-export default Component.extend(PropTypeMixin, {
+export default Component.extend({
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
 
   attributeBindings: [
-    'computedTabIndex:tabIndex'
+    'ariaLabel:aria-label',
+    'computedTabIndex:tabIndex',
+    'opened:aria-pressed',
+    'role',
+    'style'
   ],
 
   classNameBindings: [
@@ -60,31 +70,24 @@ export default Component.extend(PropTypeMixin, {
     'text::frost-select-placeholder'
   ],
 
-  classNames: [
-    'frost-select'
-  ],
-
   layout,
 
   // == PropTypes =============================================================
 
-  /**
-   * Properties for this component. Options are expected to be (potentially)
-   * passed in to the component. State properties are *not* expected to be
-   * passed in/overwritten.
-   */
   propTypes: {
     // options
     autofocus: PropTypes.bool,
     disabled: PropTypes.bool,
     error: PropTypes.bool,
-    hook: PropTypes.string.isRequired,
+    label: PropTypes.string,
+    secondaryLabels: PropTypes.arrayOf(PropTypes.string),
     multiselect: PropTypes.bool,
     onBlur: PropTypes.func,
     onChange: PropTypes.func,
     onFocus: PropTypes.func,
     onInput: PropTypes.func,
     renderTarget: PropTypes.string,
+    role: PropTypes.string,
     selected: PropTypes.oneOfType([
       PropTypes.array,
       PropTypes.number
@@ -98,6 +101,8 @@ export default Component.extend(PropTypeMixin, {
       PropTypes.string
     ]),
     tabIndex: PropTypes.number,
+    width: PropTypes.oneOfType([PropTypes.number, PropTypes.null]),
+    wrapLabels: PropTypes.bool,
 
     // state
     $element: PropTypes.object,
@@ -111,15 +116,9 @@ export default Component.extend(PropTypeMixin, {
       PropTypes.string
     ]),
     opened: PropTypes.bool,
-
-    // keywords
-    attributeBindings: PropTypes.arrayOf(PropTypes.string),
-    classNameBindings: PropTypes.arrayOf(PropTypes.string),
-    classNames: PropTypes.arrayOf(PropTypes.string),
-    layout: PropTypes.any
+    debounceInterval: PropTypes.number
   },
 
-  /** @returns {Object} the default property values when not provided by consumer */
   getDefaultProps () {
     return {
       // options
@@ -128,8 +127,9 @@ export default Component.extend(PropTypeMixin, {
       error: false,
       multiselect: false,
       renderTarget: 'frost-select',
+      role: 'button',
       tabIndex: 0,
-
+      debounceInterval: 0,
       // state
       focused: false
     }
@@ -138,12 +138,23 @@ export default Component.extend(PropTypeMixin, {
   // == Computed Properties ===================================================
 
   @readOnly
+  @computed('label', 'opened')
+  ariaLabel (label, opened) {
+    const verb = opened ? 'Hide' : 'Show'
+
+    if (label) {
+      return `${verb} ${label} combobox`
+    }
+
+    return `${verb} combobox`
+  },
+
+  @readOnly
   @computed('data', 'filter', 'onInput')
-  // FIXME: jsdoc
   items (data, filter, onInput) {
     // If no data to filter we are done
     if (!data) {
-      return data
+      return []
     }
 
     // External filtering
@@ -162,16 +173,25 @@ export default Component.extend(PropTypeMixin, {
         }
 
         const label = item.label || ''
+        const secondaryLabels = item.secondaryLabels || []
 
-        return label.toLowerCase().indexOf(filter) !== -1
+        if (label.toLowerCase().indexOf(filter) !== -1) {
+          return true
+        }
+
+        const filteredSecondaryLabels = secondaryLabels.filter(function (secondaryLabel) {
+          if (secondaryLabel.toLowerCase().indexOf(filter) !== -1) {
+            return true
+          }
+        })
+        return filteredSecondaryLabels.length > 0
       })
   },
 
   @readOnly
   @computed('data', 'selected', 'internalSelectedValue')
-  // FIXME: jsdoc
   selectedItems (items, selected, selectedValue) {
-    if (selectedValue) {
+    if (selectedValue !== undefined) {
       return items.filter((item) => {
         if (typeOf(selectedValue) === 'array') {
           return selectedValue.indexOf(item.value) !== -1
@@ -187,7 +207,7 @@ export default Component.extend(PropTypeMixin, {
         .map((itemIndex) => items[itemIndex])
     }
 
-    if (selected ** selected <= 0 && selected < items.length) {
+    if (selected !== undefined && selected <= 0 && selected < items.length) {
       return [items[selected]]
     }
 
@@ -224,19 +244,51 @@ export default Component.extend(PropTypeMixin, {
     return `${selectedItems.length} items selected`
   },
 
+  @readOnly
+  @computed('width')
+
+  /**
+   * Get a style string based on the presence of some properties
+   * @param {String} width the width property specified
+   * @returns {String} the completed style string
+   */
+  style (width) {
+    let styles = ''
+
+    // if a property is not falsy, append it to the style string
+    // note that in the width case, we want the component interface to have absolute power over the width
+    // so it will override any max or win widths to ensure ultimate control
+    if (width) styles += `width: ${width}px; max-width: initial; min-width:initial; `
+    return htmlSafe(styles)
+  },
+  // == Tasks =================================================================
+
+  /**
+   * Fires input event after waiting for debounceInterval to clear
+   * @param {Function} cb - Reference to onInput
+   * @param {String} value - Filter String
+   */
+  inputTask: task(function * (cb, value) {
+    const debounceInterval = this.get('debounceInterval')
+
+    yield timeout(debounceInterval)
+    cb(value)
+  }).restartable(),
+
   // == Functions =============================================================
 
   // == DOM Events ============================================================
 
-  // FIXME: jsdoc
-  _onClick: Ember.on('click', function () {
+  _onClick: on('click', function (e) {
     if (!this.get('disabled')) {
       this.toggleProperty('opened')
     }
+    if (this.onClick) {
+      this.onClick(e)
+    }
   }),
 
-  // FIXME: jsdoc
-  _onKeyDown: Ember.on('keyDown', function (e) {
+  _onKeyDown: on('keyDown', function (e) {
     if (
       [DOWN_ARROW, UP_ARROW].indexOf(e.keyCode) !== -1 &&
       !this.get('openend')
@@ -247,8 +299,7 @@ export default Component.extend(PropTypeMixin, {
     }
   }),
 
-  // FIXME: jsdoc
-  _onKeyPress: Ember.on('keyPress', function (e) {
+  _onKeyPress: on('keyPress', function (e) {
     if (e.keyCode === SPACE) {
       e.preventDefault() // Keep space from scrolling page
       e.stopPropagation()
@@ -256,8 +307,7 @@ export default Component.extend(PropTypeMixin, {
     }
   }),
 
-  // FIXME: jsdoc
-  _onFocusIn: Ember.on('focusIn', function () {
+  _onFocusIn: on('focusIn', function () {
     // If select is disabled make sure it can't get focus
     if (this.get('disabled')) {
       this.$().blur()
@@ -272,8 +322,7 @@ export default Component.extend(PropTypeMixin, {
     }
   }),
 
-  // FIXME: jsdoc
-  _onFocusOut: Ember.on('focusOut', function () {
+  _onFocusOut: on('focusOut', function () {
     // We must use run.later so filter text input has time to focus when select
     // dropdown is being opened
     run.later(() => {
@@ -306,7 +355,6 @@ export default Component.extend(PropTypeMixin, {
 
   // == Lifecycle Hooks =======================================================
 
-  /* Ember.Component method */
   didInsertElement () {
     this._super(...arguments)
 
@@ -320,14 +368,13 @@ export default Component.extend(PropTypeMixin, {
     }
   },
 
-  /* Ember.Component method */
-  didReceiveAttrs (attrs) {
+  didReceiveAttrs () {
     this._super(...arguments)
 
     const props = {}
 
-    let newSelectedValue = get(attrs, 'newAttrs.selectedValue.value')
-    let oldSelectedValue = get(attrs, 'oldAttrs.selectedValue.value')
+    let newSelectedValue = this.get('selectedValue')
+    let oldSelectedValue = this.get('_oldSelectedValue')
 
     // If user provided a new selected value and it doesn't match the internal
     // selected value then update internal selected value
@@ -341,12 +388,13 @@ export default Component.extend(PropTypeMixin, {
     if (Object.keys(props).length !== 0) {
       this.setProperties(props)
     }
+
+    this.set('_oldSelectedValue', newSelectedValue)
   },
 
   // == Actions ===============================================================
 
   actions: {
-    // FIXME: jsdoc
     closeDropDown () {
       this.setProperties({
         filter: '',
@@ -358,19 +406,19 @@ export default Component.extend(PropTypeMixin, {
       this.$().focus()
     },
 
-    // FIXME: jsdoc
     filterInput (e) {
-      const filter = e.target.value
+      const inputTask = this.get('inputTask')
       const onInput = this.get('onInput')
 
+      const filter = e.target.value
+
       if (typeOf(onInput) === 'function') {
-        onInput(filter)
+        inputTask.perform(onInput, filter)
       } else {
         this.set('filter', filter)
       }
     },
 
-    // FIXME: jsdoc
     selectItem (selectedValue) {
       const isMultiselect = this.get('multiselect')
       const props = {
@@ -387,7 +435,9 @@ export default Component.extend(PropTypeMixin, {
       const onChange = this.get('onChange')
 
       if (typeOf(onChange) === 'function') {
-        this.onChange(selectedValue)
+        run.next(() => {
+          this.onChange(selectedValue)
+        })
       }
 
       // We need to make sure focus goes back to select since it is on the

@@ -1,7 +1,8 @@
-/* globals module */
+/* eslint-env node */
+'use strict'
 
-// 'use strict'
-
+// const AssetRev = require('broccoli-asset-rev')
+const autoprefixer = require('broccoli-autoprefixer')
 const writeFile = require('broccoli-file-creator')
 const Funnel = require('broccoli-funnel')
 const mergeTrees = require('broccoli-merge-trees')
@@ -10,7 +11,8 @@ const fs = require('fs')
 const path = require('path')
 
 /**
- * Creates an object composed of the object properties predicate returns truthy for. The predicate is invoked with two arguments: (value, key).
+ * Creates an object composed of the object properties predicate returns truthy for. The predicate is invoked
+ * with two arguments: (value, key).
  * @param {Object} object - the source object
  * @param {Function} predicate - The function invoked per property
  * @returns {Object} Returns the new object
@@ -38,7 +40,7 @@ function pickBy (object, predicate) {
  */
 function get (object, path, defaultValue) {
   const segments = path.split('.')
-  var result = object
+  let result = object
 
   while (segments.length !== 0) {
     if (isObject(result)) {
@@ -75,15 +77,17 @@ function isObject (object) {
 module.exports = {
   name: 'ember-frost-core',
 
+  _getAddonOptions: function () {
+    return (this.parent && this.parent.options) || (this.app && this.app.options) || {}
+  },
+
   included: function (app) {
     // Addons - see: https://github.com/ember-cli/ember-cli/issues/3718
     if (typeof app.import !== 'function' && app.app) {
       this.app = app = app.app
     }
 
-    this.eachAddonInvoke('included', [app])
-
-    this._super.included(app)
+    this._super.included.apply(this, app)
 
     if (app) {
       const robotoPath = path.join('vendor', 'google', 'fonts', 'roboto')
@@ -99,20 +103,9 @@ module.exports = {
     }
   },
 
-  init: function (app) {
-    this.options = this.options || {}
-    this.options.babel = this.options.babel || {}
-    this.options.babel.optional = this.options.babel.optional || []
-
-    if (this.options.babel.optional.indexOf('es7.decorators') === -1) {
-      this.options.babel.optional.push('es7.decorators')
-    }
-    this._super.init && this._super.init.apply(this, arguments)
-  },
-
   flattenIcons: function (iconNames, subDir, srcDir) {
     fs.readdirSync(srcDir).forEach((fileName) => {
-      var filePath = path.join(srcDir, fileName)
+      const filePath = path.join(srcDir, fileName)
       if (fs.lstatSync(filePath).isDirectory()) {
         this.flattenIcons(iconNames, `${subDir}${subDir === '' ? '' : '/'}${fileName}`, filePath)
       } else if (fileName.endsWith('.svg')) {
@@ -126,15 +119,15 @@ module.exports = {
   /* eslint-disable complexity */
   // Present purely to allow programmatic access to the icon packs and icon names (for demo purposes)
   treeForAddon: function (tree) {
-    var addonTree = this._super.treeForAddon.call(this, tree)
+    const addonTree = this._super.treeForAddon.call(this, tree)
 
-    var iconNames = {}
+    let iconNames = {}
 
-    var addonPackages = pickBy(this.project.addonPackages, (addonPackage) => {
+    const addonPackages = pickBy(this.project.addonPackages, (addonPackage) => {
       return has(addonPackage.pkg, 'ember-frost-icon-pack')
     })
 
-    for (var addonName in addonPackages) {
+    for (let addonName in addonPackages) {
       if (addonPackages.hasOwnProperty(addonName)) {
         const addonPackage = addonPackages[addonName]
         const iconPack = addonPackage.pkg['ember-frost-icon-pack']
@@ -159,11 +152,25 @@ module.exports = {
     const iconNameJson = JSON.stringify(iconNames, null, 2)
     const iconNameTree = writeFile('modules/ember-frost-core/icon-packs.js', `export default ${iconNameJson}`)
 
-    return mergeTrees([addonTree, iconNameTree], {overwrite: true})
-  },
-  /* eslint-enable complexity */
+    let output = iconNameTree
+    const addonOptions = this._getAddonOptions()
 
-  treeForPublic: function (tree) {
+    if (addonOptions && addonOptions.babel) {
+      const addon = this.addons.find(addon => addon.name === 'ember-cli-babel')
+      output = addon.transpileTree(iconNameTree, addonOptions.babel)
+    }
+
+    return mergeTrees([addonTree, output], {overwrite: true})
+  },
+  /**
+   * Override of `treeForPublic` is to merge the
+   * existing tree for public files with the set of
+   * svg assets, supplied in the `svg` directory
+   * @param  {[type]} treeForPublic [description]
+   * @return {[type]}               [description]
+   */
+  /* eslint-enable complexity */
+  treeForPublic: function (treeForPublic) {
     const isAddon = this.project.isEmberCLIAddon()
 
     const addonPackages = pickBy(this.project.addonPackages, (addonPackage) => {
@@ -176,13 +183,13 @@ module.exports = {
       const iconPackPath = iconPack.path || 'svgs'
       const addonIconPackPath = path.join(addonPackage.path, iconPackPath)
 
-      var svgFunnel = new Funnel(addonIconPackPath, {
+      const svgFunnel = new Funnel(addonIconPackPath, {
         include: [new RegExp(/\.svg$/)]
       })
 
       return new SVGStore(svgFunnel, {
         outputFile: `/assets/icon-packs/${iconPack.name}.svg`,
-        svgstoreOpts: { customSymbolAttrs: ['preserveAspectRatio'] }
+        svgstoreOpts: {customSymbolAttrs: ['preserveAspectRatio']}
       })
     })
 
@@ -197,10 +204,39 @@ module.exports = {
       })
       iconPacks.push(new SVGStore(svgFunnel, {
         outputFile: `/assets/icon-packs/${localIconPackName}.svg`,
-        svgstoreOpts: { customSymbolAttrs: ['preserveAspectRatio'] }
+        svgstoreOpts: {customSymbolAttrs: ['preserveAspectRatio']}
       }))
     }
 
-    return mergeTrees(iconPacks, {overwrite: true})
+    const mergedIconPacks = mergeTrees(iconPacks, {overwrite: true})
+
+    // const assetRevisedIconPacks = new AssetRev(mergedIconPacks, {
+    //   generateAssetMap: true,
+    //   extensions: ['svg'],
+    //   assetMapPath: 'assets/icon-assets.json'
+    // })
+
+    const treesToMerge = [mergedIconPacks]
+
+    if (treeForPublic) {
+      treesToMerge.push(treeForPublic)
+    }
+
+    return mergeTrees(treesToMerge, {overwrite: true})
+  },
+  /**
+   * Post process a given addon tree
+   * @param {String} type Type of tree being processed
+   * @param {Tree} tree Current tree being processed
+   * @returns {Tree} Autoprefixed css tree
+   */
+  postprocessTree (type, tree) {
+    if (type === 'css') {
+      const options = this._getAddonOptions().autoprefixer || {
+        browsers: ['last 2 versions']
+      }
+      tree = autoprefixer(tree, options)
+    }
+    return tree
   }
 }

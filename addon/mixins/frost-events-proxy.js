@@ -1,8 +1,9 @@
 /**
  * Mixin for the frost-events-proxy
  */
-import Ember from 'ember'
-const {Mixin, on} = Ember
+
+import {on} from '@ember/object/evented'
+import Mixin from '@ember/object/mixin'
 
 import {events} from '../utils'
 

@@ -1,8 +1,8 @@
-import Ember from 'ember'
-const {Controller} = Ember
+import Controller from '@ember/controller'
+import {inject as service} from '@ember/service'
 
 export default Controller.extend({
-  notifications: Ember.inject.service('notification-messages'),
+  notifications: service('notification-messages'),
 
   // used for initial togged button
   value7: 'trueValue',

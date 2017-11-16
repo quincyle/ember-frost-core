@@ -12,10 +12,14 @@
 ember install ember-frost-core
 ```
 
+_Note:_ Packages that are already installed in the consumer within the required semver range will not be
+re-installed or have blueprints re-run. ([blueprint](blueprint/ember-frost-core/index.js))
+
 ## Components
 
 The following components are available when you install ember-frost-core
 
+* [frost-bookends](docs/frost-bookends.md)
 * [frost-button](docs/frost-button.md)
 * [frost-checkbox](docs/frost-checkbox.md)
 * [frost-theme](docs/frost-css.md)
@@ -55,6 +59,6 @@ and output code coverage.
 [ci-url]: https://travis-ci.org/ciena-frost/ember-frost-core
 [cov-img]: https://img.shields.io/coveralls/ciena-frost/ember-frost-core.svg "Coveralls Code Coverage"
 [cov-url]: https://coveralls.io/github/ciena-frost/ember-frost-core
-[ember-img]: https://img.shields.io/badge/ember-2.3+-green.svg "Ember 2.3+"
+[ember-img]: https://img.shields.io/badge/ember-2.4+-green.svg "Ember 2.4+"
 [npm-img]: https://img.shields.io/npm/v/ember-frost-core.svg "NPM Version"
 [npm-url]: https://www.npmjs.com/package/ember-frost-core

@@ -1,14 +1,17 @@
 /**
  * Component definition for the frost-text component
  */
-import Ember from 'ember'
-const {Component, get, isPresent, on, set} = Ember
-import {task, timeout} from 'ember-concurrency'
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
+
+import {on} from '@ember/object/evented'
+import {isPresent} from '@ember/utils'
+
 import FrostEventsProxyMixin from '../mixins/frost-events-proxy'
 import layout from '../templates/components/frost-text'
+import Component from './frost-component'
+import {task, timeout} from 'ember-concurrency'
+import {PropTypes} from 'ember-prop-types'
 
-export default Component.extend(FrostEventsProxyMixin, PropTypeMixin, {
+export default Component.extend(FrostEventsProxyMixin, {
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
@@ -18,23 +21,13 @@ export default Component.extend(FrostEventsProxyMixin, PropTypeMixin, {
     'isClearEnabled'
   ],
 
-  classNames: [
-    'frost-text'
-  ],
-
   layout,
 
   // == PropTypes =============================================================
 
-  /**
-   * Properties for this component. Options are expected to be (potentially)
-   * passed in to the component. State properties are *not* expected to be
-   * passed in/overwritten.
-   */
   propTypes: {
     // options
     align: PropTypes.string,
-    hook: PropTypes.string,
     isClearEnabled: PropTypes.bool,
     isClearVisible: PropTypes.bool,
     isHookEmbedded: PropTypes.bool,
@@ -54,17 +47,11 @@ export default Component.extend(FrostEventsProxyMixin, PropTypeMixin, {
     selectionDirection: PropTypes.string,
     spellcheck: PropTypes.bool,
     value: PropTypes.string,
-    title: PropTypes.string,
+    title: PropTypes.string
 
     // state
-
-    // keywords
-    classNameBindings: PropTypes.arrayOf(PropTypes.string),
-    classNames: PropTypes.arrayOf(PropTypes.string),
-    layout: PropTypes.any
   },
 
-  /** @returns {Object} the default property values when not provided by consumer */
   getDefaultProps () {
     return {
       // options
@@ -77,19 +64,9 @@ export default Component.extend(FrostEventsProxyMixin, PropTypeMixin, {
       isHookEmbedded: false,
       readonly: false,
       required: false,
-      selectionDirection: 'none',
       spellcheck: false,
       tabindex: 0,
-      type: 'text',
-
-      // Setting these as part of establishing an initial value
-      form: null,
-      maxlength: null,
-      placeholder: null,
-      title: null,
-      value: null
-
-      // state
+      type: 'text'
     }
   },
 
@@ -99,7 +76,6 @@ export default Component.extend(FrostEventsProxyMixin, PropTypeMixin, {
 
   // == Tasks ==================================================================
 
-  // FIXME: jsdoc
   _clear: task(function * () {
     this.$('input')
       .focus()
@@ -107,14 +83,13 @@ export default Component.extend(FrostEventsProxyMixin, PropTypeMixin, {
       .trigger('input')
   }).restartable(),
 
-  // FIXME: jsdoc
   _showClear: task(function * (isFocused) {
-    const showClear = isFocused && isPresent(get(this, 'value')) && !get(this, 'readonly')
-    if (get(this, 'isClearVisible') === showClear) {
+    const showClear = isFocused && isPresent(this.get('value')) && !this.get('readonly')
+    if (this.get('isClearVisible') === showClear) {
       return
     }
 
-    set(this, 'isClearVisible', showClear)
+    this.set('isClearVisible', showClear)
 
     // If the clear button is clicked the focusOut event occurs before
     // the click event, so delay disabling the clear so that the click
@@ -122,25 +97,23 @@ export default Component.extend(FrostEventsProxyMixin, PropTypeMixin, {
     if (!showClear) {
       yield timeout(200) // Duration of the visibility animation
     }
-    set(this, 'isClearEnabled', showClear)
+    this.set('isClearEnabled', showClear)
   }).restartable(),
 
   // == DOM Events ============================================================
 
-  // FIXME: jsdoc
   _showClearEvent: on('focusIn', 'focusOut', 'input', function (event) {
     const isFocused = event.type !== 'focusout'
-    get(this, '_showClear').perform(isFocused)
+    this.get('_showClear').perform(isFocused)
   }),
 
   // == Lifecycle Hooks =======================================================
 
-  /* Ember.Component method */
   init () {
     this._super(...arguments)
-    this.receivedHook = this.hook
-    if (get(this, 'isHookEmbedded')) {
-      this.hook = ''
+    this.set('receivedHook', this.get('hook'))
+    if (this.get('isHookEmbedded')) {
+      this.set('hook', '')
     }
   },
 
@@ -152,23 +125,20 @@ export default Component.extend(FrostEventsProxyMixin, PropTypeMixin, {
   // To avoid this, we use the TextSupport 'key-up' event and
   // proxy the event to the keyUp handler.
   actions: {
-    // FIXME: jsdoc
     clear () {
-      get(this, '_clear').perform()
+      this.get('_clear').perform()
     },
 
-    // FIXME: jsdoc
     keyUp (value, event) {
-      if (isPresent(get(this, '_eventProxy.keyUp'))) {
+      if (isPresent(this.get('_eventProxy.keyUp'))) {
         this._eventProxy.keyUp(event)
       }
     },
 
-    // FIXME: jsdoc
     _onInput (event) {
-      if (isPresent(get(this, '_eventProxy.input'))) {
+      if (isPresent(this.get('_eventProxy.input'))) {
         // Add id and value for legacy support
-        event.id = get(this, 'elementId')
+        event.id = this.get('elementId')
         event.value = event.target.value
         this._eventProxy.input(event)
       }

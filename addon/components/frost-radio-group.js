@@ -1,31 +1,23 @@
 /**
  * Component definition for frost-radio-group component
  */
-import Ember from 'ember'
-const {Component} = Ember
-import computed from 'ember-computed-decorators'
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
 
 import layout from '../templates/components/frost-radio-group'
+import Component from './frost-component'
+import {computed, readOnly} from 'ember-decorators/object'
+import {PropTypes} from 'ember-prop-types'
 
-export default Component.extend(PropTypeMixin, {
+export default Component.extend({
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
 
-  classNames: ['frost-radio-group'],
   layout,
 
   // == PropTypes =============================================================
 
-  /**
-   * Properties for this component. Options are expected to be (potentially)
-   * passed in to the component. State properties are *not* expected to be
-   * passed in/overwritten.
-   */
   propTypes: {
     // options
-    hook: PropTypes.string,
     id: PropTypes.string,
     inputs: PropTypes.arrayOf(PropTypes.shape({
       disabled: PropTypes.bool,
@@ -35,20 +27,14 @@ export default Component.extend(PropTypeMixin, {
       value: PropTypes.string.isRequired
     })),
     selectedValue: PropTypes.string,
-    onChange: PropTypes.func,
+    onChange: PropTypes.func
 
     // state
-
-    // keywords
-    classNames: PropTypes.arrayOf(PropTypes.string),
-    layout: PropTypes.any
   },
 
-  /** @returns {Object} the default property values when not provided by consumer */
   getDefaultProps () {
     return {
       // options
-      id: null,
       inputs: [],
       value: null
 
@@ -58,6 +44,7 @@ export default Component.extend(PropTypeMixin, {
 
   // == Computed Properties ===================================================
 
+  @readOnly
   @computed('inputs')
   /**
    * Set the default values for the inputs.

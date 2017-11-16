@@ -1,15 +1,11 @@
-/* jshint expr:true */
-import { expect } from 'chai'
-import {
-  describe,
-  it
-} from 'mocha'
+import {expect} from 'chai'
 import keycodes from 'ember-frost-core/utils/key-codes'
+import {describe, it} from 'mocha'
 
-describe('keycodes', function () {
+describe('Unit / Utility / keycodes', function () {
   // Replace this with your real tests.
-  it('works', function () {
+  it('should work', function () {
     let result = keycodes
-    expect(result).to.be.ok
+    expect(result).not.to.equal(null)
   })
 })

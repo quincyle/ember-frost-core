@@ -1,163 +1,265 @@
 import {expect} from 'chai'
-import Ember from 'ember'
-const {$} = Ember
-import {describeComponent} from 'ember-mocha'
-import PropTypeMixin from 'ember-prop-types'
-import {
-  beforeEach,
-  it
-} from 'mocha'
+import Component from 'ember-frost-core/components/frost-component'
+import {unit} from 'ember-test-utils/test-support/setup-component-test'
+import $ from 'jquery'
+import {beforeEach, describe, it} from 'mocha'
 import sinon from 'sinon'
 
-describeComponent(
-  'frost-scroll',
-  'Unit: FrostScrollComponent',
-  {
-    unit: true
-  },
-  function () {
-    let component
+const test = unit('frost-scroll')
+describe(test.label, function () {
+  test.setup()
 
-    beforeEach(function () {
-      component = this.subject()
+  let component
+
+  beforeEach(function () {
+    component = this.subject({
+      hook: 'myScroll'
     })
+  })
 
-    it('includes className frost-scroll', function () {
-      expect(component.classNames).to.include('frost-scroll')
-    })
+  it('should extend the common frost component', function () {
+    expect(
+      component instanceof Component,
+      'is instance of Frost Component'
+    ).to.equal(true)
+  })
 
-    it('sets default property values correctly', function () {
-      expect(
-        component.get('hook'),
-        'hook: "undefined"'
-      ).to.be.undefined
-    })
+  it('should register and unregister "ps-scroll-up" event handlers', function () {
+    const spyOn = sinon.spy($.fn, 'on')
+    const spyOff = sinon.spy($.fn, 'off')
 
-    it('has the expected Mixins', function () {
-      expect(
-        PropTypeMixin.detect(component),
-        'PropTypeMixin Mixin is present'
-      ).to.be.true
-    })
+    component.set('onScrollUp', function () {})
+    this.render()
 
-    it('registers and unregisters "ps-scroll-up" event handlers', function () {
-      const spyOn = sinon.spy($.fn, 'on')
-      const spyOff = sinon.spy($.fn, 'off')
+    spyOn.reset()
 
-      component.set('onScrollUp', function () { return })
+    component.trigger('didInsertElement')
 
-      this.render()
+    expect(
+      spyOn.calledWith("ps-scroll-up"), // eslint-disable-line
+      'on() was called with "ps-scroll-up" event'
+    ).to.equal(true)
 
-      spyOn.reset()
+    spyOff.reset()
 
-      component.trigger('didInsertElement')
+    component.trigger('willDestroyElement')
 
-      expect(
-        spyOn.calledWith("ps-scroll-up"), // eslint-disable-line
-        'on() was called with "ps-scroll-up" event'
-      ).to.be.true
+    expect(
+      spyOff.calledWith("ps-scroll-up"), // eslint-disable-line
+      'off() was called with "ps-scroll-up" event'
+    ).to.equal(true)
 
-      spyOff.reset()
+    $.fn.on.restore()
+    $.fn.off.restore()
+  })
 
-      component.trigger('willDestroyElement')
+  it('should register and unregister "ps-scroll-down" event handlers', function () {
+    const spyOn = sinon.spy($.fn, 'on')
+    const spyOff = sinon.spy($.fn, 'off')
 
-      expect(
-        spyOff.calledWith("ps-scroll-up"), // eslint-disable-line
-        'off() was called with "ps-scroll-up" event'
-      ).to.be.true
+    component.set('onScrollDown', function () {})
 
-      $.fn.on.restore()
-      $.fn.off.restore()
-    })
+    this.render()
 
-    it('registers and unregisters "ps-scroll-down" event handlers', function () {
-      const spyOn = sinon.spy($.fn, 'on')
-      const spyOff = sinon.spy($.fn, 'off')
+    spyOn.reset()
 
-      component.set('onScrollDown', function () { return })
+    component.trigger('didInsertElement')
 
-      this.render()
+    expect(
+      spyOn.calledWith("ps-scroll-down"), // eslint-disable-line
+      'on() was called with "ps-scroll-down" event'
+    ).to.equal(true)
 
-      spyOn.reset()
+    spyOff.reset()
 
-      component.trigger('didInsertElement')
+    component.trigger('willDestroyElement')
 
-      expect(
-        spyOn.calledWith("ps-scroll-down"), // eslint-disable-line
-        'on() was called with "ps-scroll-down" event'
-      ).to.be.true
+    expect(
+      spyOff.calledWith("ps-scroll-down"), // eslint-disable-line
+      'off() was called with "ps-scroll-down" event'
+    ).to.equal(true)
 
-      spyOff.reset()
+    $.fn.on.restore()
+    $.fn.off.restore()
+  })
 
-      component.trigger('willDestroyElement')
+  it('should register and unregister "ps-y-reach-start" event handlers', function () {
+    const spyOn = sinon.spy($.fn, 'on')
+    const spyOff = sinon.spy($.fn, 'off')
 
-      expect(
-        spyOff.calledWith("ps-scroll-down"), // eslint-disable-line
-        'off() was called with "ps-scroll-down" event'
-      ).to.be.true
+    component.set('onScrollYStart', function () {})
 
-      $.fn.on.restore()
-      $.fn.off.restore()
-    })
+    this.render()
 
-    it('registers and unregisters "ps-y-reach-start" event handlers', function () {
-      const spyOn = sinon.spy($.fn, 'on')
-      const spyOff = sinon.spy($.fn, 'off')
+    spyOn.reset()
 
-      component.set('onScrollYStart', function () { return })
+    component.trigger('didInsertElement')
 
-      this.render()
+    expect(
+      spyOn.calledWith("ps-y-reach-start"), // eslint-disable-line
+      'on() was called with "ps-y-reach-start" event'
+    ).to.equal(true)
 
-      spyOn.reset()
+    spyOff.reset()
 
-      component.trigger('didInsertElement')
+    component.trigger('willDestroyElement')
 
-      expect(
-        spyOn.calledWith("ps-y-reach-start"), // eslint-disable-line
-        'on() was called with "ps-y-reach-start" event'
-      ).to.be.true
+    expect(
+      spyOff.calledWith("ps-y-reach-start"), // eslint-disable-line
+      'off() was called with "ps-y-reach-start" event'
+    ).to.equal(true)
 
-      spyOff.reset()
+    $.fn.on.restore()
+    $.fn.off.restore()
+  })
 
-      component.trigger('willDestroyElement')
+  it('should register and unregister "ps-y-reach-end" event handlers', function () {
+    const spyOn = sinon.spy($.fn, 'on')
+    const spyOff = sinon.spy($.fn, 'off')
 
-      expect(
-        spyOff.calledWith("ps-y-reach-start"), // eslint-disable-line
-        'off() was called with "ps-y-reach-start" event'
-      ).to.be.true
+    component.set('onScrollYEnd', function () {})
 
-      $.fn.on.restore()
-      $.fn.off.restore()
-    })
+    this.render()
 
-    it('registers and unregisters "ps-y-reach-end" event handlers', function () {
-      const spyOn = sinon.spy($.fn, 'on')
-      const spyOff = sinon.spy($.fn, 'off')
+    spyOn.reset()
 
-      component.set('onScrollYEnd', function () { return })
+    component.trigger('didInsertElement')
 
-      this.render()
+    expect(
+      spyOn.calledWith("ps-y-reach-end"), // eslint-disable-line
+      'on() was called with "ps-y-reach-end" event'
+    ).to.equal(true)
 
-      spyOn.reset()
+    spyOff.reset()
 
-      component.trigger('didInsertElement')
+    component.trigger('willDestroyElement')
 
-      expect(
-        spyOn.calledWith("ps-y-reach-end"), // eslint-disable-line
-        'on() was called with "ps-y-reach-end" event'
-      ).to.be.true
+    expect(
+      spyOff.calledWith("ps-y-reach-end"), // eslint-disable-line
+      'off() was called with "ps-y-reach-end" event'
+    ).to.equal(true)
 
-      spyOff.reset()
+    $.fn.on.restore()
+    $.fn.off.restore()
+  })
 
-      component.trigger('willDestroyElement')
+  it('should register and unregister "ps-scroll-x" event handlers', function () {
+    const spyOn = sinon.spy($.fn, 'on')
+    const spyOff = sinon.spy($.fn, 'off')
 
-      expect(
-        spyOff.calledWith("ps-y-reach-end"), // eslint-disable-line
-        'off() was called with "ps-y-reach-end" event'
-      ).to.be.true
+    component.set('onScrollX', function () {})
 
-      $.fn.on.restore()
-      $.fn.off.restore()
-    })
-  }
-)
+    this.render()
+
+    spyOn.reset()
+
+    component.trigger('didInsertElement')
+
+    expect(
+      spyOn.calledWith("ps-scroll-x"), // eslint-disable-line
+      'on() was called with "ps-scroll-x" event'
+    ).to.equal(true)
+
+    spyOff.reset()
+
+    component.trigger('willDestroyElement')
+
+    expect(
+      spyOff.calledWith("ps-scroll-x"), // eslint-disable-line
+      'off() was called with "ps-scroll-x" event'
+    ).to.equal(true)
+
+    $.fn.on.restore()
+    $.fn.off.restore()
+  })
+
+  it('should register and unregister "ps-scroll-right" event handlers', function () {
+    const spyOn = sinon.spy($.fn, 'on')
+    const spyOff = sinon.spy($.fn, 'off')
+
+    component.set('onScrollRight', function () {})
+
+    this.render()
+
+    spyOn.reset()
+
+    component.trigger('didInsertElement')
+
+    expect(
+      spyOn.calledWith("ps-scroll-right"), // eslint-disable-line
+      'on() was called with "ps-scroll-right" event'
+    ).to.equal(true)
+
+    spyOff.reset()
+
+    component.trigger('willDestroyElement')
+
+    expect(
+      spyOff.calledWith("ps-scroll-right"), // eslint-disable-line
+      'off() was called with "ps-scroll-right" event'
+    ).to.equal(true)
+
+    $.fn.on.restore()
+    $.fn.off.restore()
+  })
+
+  it('should register and unregister "ps-scroll-left" event handlers', function () {
+    const spyOn = sinon.spy($.fn, 'on')
+    const spyOff = sinon.spy($.fn, 'off')
+
+    component.set('onScrollLeft', function () {})
+
+    this.render()
+
+    spyOn.reset()
+
+    component.trigger('didInsertElement')
+
+    expect(
+      spyOn.calledWith("ps-scroll-left"), // eslint-disable-line
+      'on() was called with "ps-scroll-left" event'
+    ).to.equal(true)
+
+    spyOff.reset()
+
+    component.trigger('willDestroyElement')
+
+    expect(
+      spyOff.calledWith("ps-scroll-left"), // eslint-disable-line
+      'off() was called with "ps-scroll-left" event'
+    ).to.equal(true)
+
+    $.fn.on.restore()
+    $.fn.off.restore()
+  })
+
+  it('should register and unregister "mouseenter" event handlers', function () {
+    const spyOn = sinon.spy($.fn, 'on')
+    const spyOff = sinon.spy($.fn, 'off')
+
+    component.set('onMouseEnter', function () {})
+
+    this.render()
+
+    spyOn.reset()
+
+    component.trigger('didInsertElement')
+
+    expect(
+      spyOn.calledWith("mouseenter"), // eslint-disable-line
+      'on() was called with "mouseenter" event'
+    ).to.equal(true)
+
+    spyOff.reset()
+
+    component.trigger('willDestroyElement')
+
+    expect(
+      spyOff.calledWith("mouseenter"), // eslint-disable-line
+      'off() was called with "mouseenter" event'
+    ).to.equal(true)
+
+    $.fn.on.restore()
+    $.fn.off.restore()
+  })
+})

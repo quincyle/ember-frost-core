@@ -1,259 +1,194 @@
 import {expect} from 'chai'
-import {
-  describeComponent,
-  it
-} from 'ember-mocha'
-import {
-  beforeEach,
-  describe
-} from 'mocha'
+import {$hook} from 'ember-hook'
+import wait from 'ember-test-helpers/wait'
+import {integration} from 'ember-test-utils/test-support/setup-component-test'
 import hbs from 'htmlbars-inline-precompile'
-import {
-  $hook,
-  initialize
-} from 'ember-hook'
+import {beforeEach, describe, it} from 'mocha'
 
-describeComponent(
-  'frost-password',
-  'Integration: FrostPasswordComponent',
-  {
-    integration: true
-  },
-  function () {
+/**
+ * @returns {String} the currently selected text
+ */
+function getSelectedText () {
+  return window.getSelection().toString()
+}
+
+/**
+ * For some reason Ember.$.browser is undefined, so this is another quick check for firefox
+ * @returns {Boolean} true if current browser is firefox
+ */
+function isFirefox () {
+  return navigator.userAgent.toLowerCase().indexOf('firefox') !== -1
+}
+
+const test = integration('frost-password')
+describe(test.label, function () {
+  test.setup()
+
+  describe('when rendered with defaults', function () {
     beforeEach(function () {
-      initialize()
-    })
-
-    it('renders default values', function () {
       this.render(hbs`
-        {{frost-password}}
+        {{frost-password hook='myPassword'}}
       `)
 
-      expect(
-        this.$('.frost-password').find('input').prop('tabIndex'),
-        'input tabindex set to 0'
-      ).to.eql(0)
-
-      expect(
-        this.$('.frost-password').find('input').prop('type'),
-        'type set to "password"'
-      ).to.eql('password')
-
-      expect(
-        this.$('.frost-password-input'),
-        'class frost-password-input is set'
-      ).to.have.length(1)
+      return wait()
     })
 
-    it('sets autofocus property', function () {
-      this.render(hbs`
-        {{frost-password
-          autofocus=true
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').prop('autofocus'),
-        'autofocus is set'
-      ).to.be.true
+    it('should default tabindex to 0', function () {
+      expect(this.$('.frost-password input')).to.have.prop('tabIndex', 0)
     })
 
-    it('sets disabled property', function () {
-      this.render(hbs`
-        {{frost-password
-          disabled=true
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').prop('disabled'),
-        'disabled is set'
-      ).to.be.true
+    it('should default type to password', function () {
+      expect(this.$('.frost-password input')).to.have.prop('type', 'password')
     })
 
-    describe('hook property', function () {
-      it('grabs frost-password as expected', function () {
-        this.render(hbs`
-          {{frost-password
-            hook='my-password'
-          }}
-        `)
-
-        expect(
-          $hook('my-password-input').hasClass('frost-text-input'),
-          'input hook is set'
-        ).to.be.true
-
-        expect(
-          $hook('my-password-clear').hasClass('frost-text-clear'),
-          'clear hook is set'
-        ).to.be.true
-      })
-
-      it('grabs frost-password-reveal as expected', function () {
-        this.render(hbs`
-          {{frost-password
-            hook='my-password'
-            revealable=true
-          }}
-        `)
-
-        expect(
-          $hook('my-password-reveal').hasClass('frost-password-reveal'),
-          'reveal hook is set'
-        ).to.be.true
-      })
+    it('should include a to frost-password-input', function () {
+      expect(this.$('.frost-password .frost-password-input')).to.have.length(1)
     })
 
-    it('sets maxlength property', function () {
-      const maxlength = 30
-
-      this.set('maxlength', maxlength)
-
-      this.render(hbs`
-        {{frost-password
-          maxlength=maxlength
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').prop('maxlength'),
-        'maxlength is set'
-      ).to.eql(maxlength)
+    it('should have the proper hook on the inner text input', function () {
+      expect($hook('myPassword-input')).to.have.class('frost-text-input')
     })
 
-    it('sets placeholder property', function () {
-      const placeholder = 'Enter your password'
-
-      this.set('placeholder', placeholder)
-
-      this.render(hbs`
-        {{frost-password
-          placeholder=placeholder
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').prop('placeholder'),
-        'placeholder is set'
-      ).to.eql(placeholder)
+    it('should have the proper hook on the inner clear button', function () {
+      expect($hook('myPassword-clear')).to.have.class('frost-text-clear')
     })
+  })
 
-    it('sets readonly property', function () {
-      this.render(hbs`
-        {{frost-password
-          readonly=true
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').prop('readonly'),
-        'readonly is set'
-      ).to.be.true
-    })
-
-    it('sets required property', function () {
-      this.render(hbs`
-        {{frost-password
-          required=true
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').prop('required'),
-        'required is set'
-      ).to.be.true
-    })
-
-    describe('revealable property', function () {
-      it('sets revealable class and text to "Show"', function () {
-        this.render(hbs`
-          {{frost-password
-            revealable=true
-          }}
-       `)
-
-        expect(
-          this.$('.frost-password').hasClass('revealable'),
-          'revealable class is set'
-        ).to.be.true
-
-        expect(
-          this.$('.frost-password-reveal').text().trim(),
-          'reveal text is set to "Show"'
-        ).to.eql('Show')
-      })
-
-      it('changes text to "Hide" upon click and type="text"', function () {
-        this.render(hbs`
-          {{frost-password
-            revealable=true
-          }}
-       `)
-
-        this.$('.frost-password-reveal').trigger('click')
-
-        expect(
-          this.$('.frost-password-reveal').text().trim(),
-          'reveal text is set to "Hide"'
-        ).to.eql('Hide')
-
-        expect(
-        this.$('.frost-password').find('input').prop('type'),
-        'type set to "text"'
-      ).to.eql('text')
-      })
-    })
-
-    it('sets tabindex property', function () {
-      const tabindex = -1
-
-      this.set('tabindex', tabindex)
-
-      this.render(hbs`
-        {{frost-password
-          tabindex=tabindex
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').prop('tabindex'),
-        'tabindex is set'
-      ).to.eql(tabindex)
-    })
-
-    it('sets title property', function () {
-      const title = 'Enter your password'
-
-      this.set('title', title)
-
-      this.render(hbs`
-        {{frost-password
-          title=title
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').prop('title'),
-        'title is set'
-      ).to.eql(title)
-    })
-
-    it('sets value property', function () {
-      const value = 'test value'
-
-      this.set('value', value)
-
-      this.render(hbs`
-        {{frost-password
-          value=value
-        }}
-     `)
-
-      expect(
-        this.$('.frost-password').find('input').val(),
-        'value is set'
-      ).to.eql(value)
-    })
+  const inputProps = {
+    autofocus: true,
+    disabled: true,
+    maxlength: 30,
+    placeholder: 'Enter your password',
+    readonly: true,
+    required: true,
+    tabindex: -1,
+    title: 'Enter your password'
   }
-)
+
+  Object.keys(inputProps).forEach((propName) => {
+    const value = inputProps[propName]
+
+    describe(`when "${propName}" is set to [${value}]`, function () {
+      beforeEach(function () {
+        const options = {
+          hook: 'myPasssword'
+        }
+
+        options[propName] = value
+        this.set('options', options)
+
+        this.render(hbs`
+          {{frost-password
+            options=options
+          }}
+        `)
+
+        return wait()
+      })
+
+      it(`should set the "${propName}" property on the inner input element`, function () {
+        expect(this.$('.frost-password input')).to.have.prop(propName, value)
+      })
+    })
+  })
+
+  describe('when the "value" property is set to "fizzbang"', function () {
+    beforeEach(function () {
+      this.render(hbs`
+        {{frost-password
+          hook='myPassword'
+          value='fizzbang'
+        }}
+      `)
+
+      return wait()
+    })
+
+    it('should set the "value" on the inner input element', function () {
+      expect($hook('myPassword-input')).to.have.value('fizzbang')
+    })
+  })
+
+  describe('when revealable is set to true', function () {
+    beforeEach(function () {
+      this.render(hbs`
+        {{frost-password
+          hook='myPassword'
+          revealable=true
+        }}
+      `)
+
+      const $input = this.$('.frost-password input')
+      $input.val('fizzbang')
+      $input.select()
+
+      return wait()
+    })
+
+    // For some unknown reason `.select()` isn't working in Firefox
+    // Neither the native JS, nor the jQuery method (@job13er 2017-05-09)
+    if (!isFirefox()) {
+      it('should have obscured password selected', function () {
+        expect(getSelectedText()).to.equal('••••••••')
+      })
+    }
+
+    it('should set proper hook on the revealable button', function () {
+      expect($hook('myPassword-reveal')).to.have.class('frost-password-reveal')
+    })
+
+    it('should add the "revealable" class', function () {
+      expect($hook('myPassword')).to.have.class('revealable')
+    })
+
+    it('should set the reveal text to "Show"', function () {
+      expect($hook('myPassword-reveal')).to.have.text('Show')
+    })
+
+    describe('when reveal is clicked', function () {
+      beforeEach(function () {
+        $hook('myPassword-reveal').click()
+        return wait()
+      })
+
+      // For some unknown reason `.select()` isn't working in Firefox
+      // Neither the native JS, nor the jQuery method (@job13er 2017-05-09)
+      if (!isFirefox()) {
+        it('should have plain password selected', function () {
+          expect(getSelectedText()).to.equal('fizzbang')
+        })
+      }
+
+      it('should change the reveal text to "Hide"', function () {
+        expect($hook('myPassword-reveal')).to.have.text('Hide')
+      })
+
+      it('should change the input type to "text"', function () {
+        expect($hook('myPassword-input')).to.have.prop('type', 'text')
+      })
+    })
+  })
+
+  describe('when using spread', function () {
+    // NOTE: this looks a little superfluous now, since we're using spread above to DRY up our attribute
+    // setting tests, but I wanted to leave it here to make an explicit check for using spread, just in case
+    // the above is re-factored at some point (@job13er 2017-05-09)
+
+    beforeEach(function () {
+      this.render(hbs`
+        {{frost-password
+          options=(hash
+            disabled=true
+            hook='myPassword'
+          )
+        }}
+      `)
+
+      return wait()
+    })
+
+    it('should still properly set input properties', function () {
+      expect(this.$('.frost-password input')).to.have.prop('disabled', true)
+    })
+  })
+})

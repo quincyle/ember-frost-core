@@ -1,7 +1,7 @@
-import Ember from 'ember'
-import iconPacks from 'ember-frost-core/icon-packs'
-
-const { computed, Controller } = Ember
+import Controller from '@ember/controller'
+import {computed} from '@ember/object'
+import {capitalize} from '@ember/string'
+import iconPacks from 'modules/ember-frost-core/icon-packs'
 
 export default Controller.extend({
   backgroundColors: [
@@ -16,7 +16,7 @@ export default Controller.extend({
   iconPacks: computed('iconPacks', () => {
     return Object.keys(iconPacks).map((name) => {
       return {
-        name: Ember.String.capitalize(name),
+        name: capitalize(name),
         icons: iconPacks[name].map((icon) => {
           return {
             name: icon,
@@ -25,7 +25,7 @@ export default Controller.extend({
         })
       }
     })
-  }),
+  }).readOnly(),
 
   actions: {
     colorSelected (color) {

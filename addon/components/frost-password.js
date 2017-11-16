@@ -1,27 +1,24 @@
 /**
  * Component definition for the frost-password component
  */
-import Ember from 'ember'
-const {Component, get} = Ember
-import computed from 'ember-computed-decorators'
-import {task, timeout} from 'ember-concurrency'
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
 
 import FrostEventsProxy from '../mixins/frost-events-proxy'
 import layout from '../templates/components/frost-password'
+import Component from './frost-component'
+import {task, timeout} from 'ember-concurrency'
+import {computed, readOnly} from 'ember-decorators/object'
+import {PropTypes} from 'ember-prop-types'
 
-export default Component.extend(FrostEventsProxy, PropTypeMixin, {
+export default Component.extend(FrostEventsProxy, {
 
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
 
-  classNames: [
-    'frost-password'
-  ],
   classNameBindings: [
     'revealable'
   ],
+
   layout,
 
   /*
@@ -42,15 +39,9 @@ export default Component.extend(FrostEventsProxy, PropTypeMixin, {
 
   // == PropTypes =============================================================
 
-  /**
-   * Properties for this component. Options are expected to be (potentially)
-   * passed in to the component. State properties are *not* expected to be
-   * passed in/overwritten.
-   */
   propTypes: {
     // options
     disabled: PropTypes.bool,
-    hook: PropTypes.string,
     isRevealed: PropTypes.bool,
     revealable: PropTypes.bool,
     tabindex: PropTypes.number,
@@ -64,17 +55,11 @@ export default Component.extend(FrostEventsProxy, PropTypeMixin, {
     readonly: PropTypes.bool,
     required: PropTypes.bool,
     selectionDirection: PropTypes.string,
-    title: PropTypes.string,
+    title: PropTypes.string
 
     // state
-
-    // keywords
-    classNames: PropTypes.arrayOf(PropTypes.string),
-    classNameBindings: PropTypes.arrayOf(PropTypes.string),
-    layout: PropTypes.any
   },
 
-  /** @returns {Object} the default property values when not provided by consumer */
   getDefaultProps () {
     return {
       // options
@@ -82,22 +67,18 @@ export default Component.extend(FrostEventsProxy, PropTypeMixin, {
       isRevealed: false,
       revealable: false,
       tabindex: 0,
-      value: null,
 
       // Setting these as part of establishing an initial value
       autofocus: false,
-      form: null,
-      maxlength: null,
-      placeholder: null,
       readonly: false,
       required: false,
-      selectionDirection: 'none',
-      title: null
+      selectionDirection: 'none'
     }
   },
 
   // == Computed properties  ==================================================
 
+  @readOnly
   @computed('isRevealed')
   /**
    * The message to display on the reveal button
@@ -108,6 +89,7 @@ export default Component.extend(FrostEventsProxy, PropTypeMixin, {
     return isRevealed ? 'Hide' : 'Show'
   },
 
+  @readOnly
   @computed('isRevealed')
   /**
    * The type of the <input>
@@ -120,24 +102,23 @@ export default Component.extend(FrostEventsProxy, PropTypeMixin, {
 
   // == Tasks =================================================================
 
-  // FIXME: jsdoc
   _toggleReveal: task(function * (isVisible) {
     this.toggleProperty('isRevealed')
 
-    const $input = this.$('input').get(0)
+    const input = this.$('input').get(0)
 
     // Capture the current cursor selection/position
-    const selectionStart = $input.selectionStart
-    const selectionEnd = $input.selectionEnd
+    const selectionStart = input.selectionStart
+    const selectionEnd = input.selectionEnd
 
     // Re-focus the input
-    $input.focus()
+    input.focus()
 
     yield timeout(0) // Let focus resolve prior to setting the cursor
 
     // Restore the cursor selection/position
-    $input.selectionStart = selectionStart
-    $input.selectionEnd = selectionEnd
+    input.selectionStart = selectionStart
+    input.selectionEnd = selectionEnd
   }).restartable(),
 
   // == DOM Events ============================================================
@@ -151,7 +132,7 @@ export default Component.extend(FrostEventsProxy, PropTypeMixin, {
      * Toggle the reveal property using an ember-concurrency task
      */
     toggleReveal () {
-      get(this, '_toggleReveal').perform()
+      this.get('_toggleReveal').perform()
     }
   }
 })

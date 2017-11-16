@@ -1,210 +1,150 @@
-/* jshint expr:true */
-import { expect } from 'chai'
-import Ember from 'ember'
-const {
-  run
-} = Ember
-import { describeComponent } from 'ember-mocha'
-import PropTypeMixin from 'ember-prop-types'
-import {
-  beforeEach,
-  describe,
-  it
-} from 'mocha'
+import {run} from '@ember/runloop'
+import {expect} from 'chai'
+import Component from 'ember-frost-core/components/frost-component'
+import {unit} from 'ember-test-utils/test-support/setup-component-test'
+import {beforeEach, describe, it} from 'mocha'
 
-describeComponent(
-  'frost-radio-button',
-  'Unit: FrostRadioButtonComponent',
-  {
-    unit: true
-  },
-  function () {
-    let component
+const test = unit('frost-radio-button')
+describe(test.label, function () {
+  test.setup()
 
-    beforeEach(function () {
-      component = this.subject({
-        _setupAssertions: function () {
-          return
-        },
-        value: 'testValue'
+  let component
+
+  beforeEach(function () {
+    component = this.subject({
+      _setupAssertions: function () {},
+      hook: 'myRadioButton',
+      value: 'testValue'
+    })
+  })
+
+  it('should set default property values correctly', function () {
+    expect(
+      component.get('checked'),
+      'checked: false'
+    ).to.equal(false)
+
+    expect(
+      component.get('disabled'),
+      'disabled: false'
+    ).to.equal(false)
+
+    expect(
+      component.get('required'),
+      'required: false'
+    ).to.equal(false)
+
+    expect(
+      component.get('tabindex'),
+      'tabindex: 0'
+    ).to.eql(0)
+
+    expect(
+      component.get('size'),
+      'size: small'
+    ).to.eql('small')
+  })
+
+  it('should extend the commone frost component', function () {
+    expect(
+      component instanceof Component,
+      'is instance of Frost Component'
+    ).to.equal(true)
+  })
+
+  it('should set dependent keys correctly', function () {
+    const checkedDependentKeys = [
+      'selectedValue',
+      'value'
+    ]
+
+    const tabindexDependentKeys = [
+      'disabled'
+    ]
+
+    expect(
+      component.checked._dependentKeys,
+      'Dependent keys are correct for checked()'
+    ).to.eql(checkedDependentKeys)
+
+    expect(
+      component.tabindex._dependentKeys,
+      'Dependent keys are correct for tabindex()'
+    ).to.eql(tabindexDependentKeys)
+  })
+
+  describe('"checked" computed property', function () {
+    const selectedValue = 'testValue'
+
+    it('should be set to true when "selectedValue" is equal to "value"', function () {
+      run(() => component.set('selectedValue', selectedValue))
+
+      expect(
+        component.get('checked'),
+        'checked: true'
+      ).to.equal(true)
+    })
+
+    it('should be set to false when "selectedValue" is NOT equal to "value"', function () {
+      run(() => {
+        component.set('selectedValue', selectedValue)
+        component.set('value', 'newTestValue')
       })
-    })
 
-    it('includes className frost-radio-button', function () {
-      expect(component.classNames).to.include('frost-radio-button')
-    })
-
-    it('sets default property values correctly', function () {
       expect(
         component.get('checked'),
         'checked: false'
-      ).to.be.false
-
-      expect(
-        component.get('disabled'),
-        'disabled: false'
-      ).to.be.false
-
-      expect(
-        component.get('required'),
-        'required: false'
-      ).to.be.false
-
-      expect(
-        component.get('tabindex'),
-        'tabindex: 0'
-      ).to.eql(0)
-
-      expect(
-        component.get('size'),
-        'size: small'
-      ).to.eql('small')
-
-      expect(
-        component.get('groupId'),
-        'groupId: null'
-      ).to.be.null
-
-      expect(
-        component.get('selectedValue'),
-        'selectedValue: null'
-      ).to.be.null
+      ).to.equal(false)
     })
+  })
 
-    it('has the expect Mixins', function () {
+  it('should have "tabindex" set to "-1" when "disabled" is set to true', function () {
+    run(() => component.set('disabled', true))
+
+    expect(
+      component.get('tabindex'),
+      'tabindex: -1'
+    ).to.eql(-1)
+  })
+
+  describe('"hookQualifiers" computed property', function () {
+    it('should be set when "value" is set', function () {
+      const value = 'my-value'
+
+      run(() => component.set('value', value))
+
       expect(
-        PropTypeMixin.detect(component),
-        'PropTypeMixin Mixin is present'
-      ).to.be.true
+        component.get('hookQualifiers').value,
+        `hookQualifiers: {value: ${value}}`
+      ).to.eql(value)
     })
+  })
 
-    it('sets dependent keys correctly', function () {
-      const checkedDependentKeys = [
-        'selectedValue',
-        'value'
-      ]
-
-      const tabindexDependentKeys = [
-        'disabled'
-      ]
-
-      expect(
-        component.checked._dependentKeys,
-        'Dependent keys are correct for checked()'
-      ).to.eql(checkedDependentKeys)
-
-      expect(
-        component.tabindex._dependentKeys,
-        'Dependent keys are correct for tabindex()'
-      ).to.eql(tabindexDependentKeys)
-    })
-
-    describe('"checked" computed property', function () {
-      const selectedValue = 'testValue'
-
-      it('is set to true when "selectedValue" is equal to "value"', function () {
-        run(() => component.set('selectedValue', selectedValue))
-
-        expect(
-          component.get('checked'),
-          'checked: true'
-        ).to.be.true
+  describe('keyPress', function () {
+    it('should not call "onChange" when "disabled" is set', function () {
+      run(() => {
+        component.set('disabled', true)
       })
 
-      it('is set to false when "selectedValue" is NOT equal to "value"', function () {
-        run(() => {
-          component.set('selectedValue', selectedValue)
-          component.set('value', 'newTestValue')
-        })
-
-        expect(
-          component.get('checked'),
-          'checked: false'
-        ).to.be.false
-      })
-    })
-
-    it('"tabindex" set to "-1" when "disabled" is set to true', function () {
-      run(() => component.set('disabled', true))
+      const keyPressed = component.keyPress({keyCode: 13})
 
       expect(
-        component.get('tabindex'),
-        'tabindex: -1'
-      ).to.eql(-1)
+        keyPressed,
+        'onChange not called'
+      ).to.equal(undefined)
     })
 
-    describe('"hook" computed property', function () {
-      it('is set when "receivedHook" is not set', function () {
-        expect(
-          component.get('hook'),
-          'hook: -button-my-value'
-        ).to.eql('-button')
+    it('should not call "onChange" when "checked" is set', function () {
+      run(() => {
+        component.set('checked', true)
       })
 
-      it('is set when "receivedHook" is set', function () {
-        const receivedHook = 'my-hook'
+      const keyPressed = component.keyPress({keyCode: 13})
 
-        run(() => {
-          component.set('receivedHook', receivedHook)
-        })
-
-        expect(
-          component.get('hook'),
-          'hook: my-hook-button-my-value'
-        ).to.eql(`${receivedHook}-button`)
-      })
+      expect(
+        keyPressed,
+        'onChange not called'
+      ).to.equal(undefined)
     })
-
-    describe('"hookQualifiers" computed property', function () {
-      it('is empty when "value" is not set', function () {
-        run(() => {
-          component.set('value', null)
-        })
-
-        expect(
-          component.get('hookQualifiers'),
-          'hookQualifiers: undefined'
-        ).to.eql(undefined)
-      })
-
-      it('is set when "value" is set', function () {
-        const value = 'my-value'
-
-        run(() => component.set('value', value))
-
-        expect(
-          component.get('hookQualifiers').value,
-          `hookQualifiers: {value: ${value}}`
-        ).to.eql(value)
-      })
-    })
-
-    describe('keyPress', function () {
-      it('"onChange" not called when "disabled" is set', function () {
-        run(() => {
-          component.set('disabled', true)
-        })
-
-        const keyPressed = component.keyPress({keyCode: 13})
-
-        expect(
-          keyPressed,
-          'onChange not called'
-        ).to.be.undefined
-      })
-
-      it('"onChange" not called when "checked" is set', function () {
-        run(() => {
-          component.set('checked', true)
-        })
-
-        const keyPressed = component.keyPress({keyCode: 13})
-
-        expect(
-          keyPressed,
-          'onChange not called'
-        ).to.be.undefined
-      })
-    })
-  }
-)
+  })
+})

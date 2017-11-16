@@ -1,12 +1,17 @@
 /**
  * Component definition for the frost-button component
  */
-import Ember from 'ember'
-const {Component, Logger, ViewUtils, get, isEmpty, typeOf} = Ember
-import computed, {readOnly} from 'ember-computed-decorators'
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
+
+import {on} from '@ember/object/evented'
+import {isEmpty} from '@ember/utils'
 
 import layout from '../templates/components/frost-button'
+import Component from './frost-component'
+import Ember from 'ember'
+import {computed, readOnly} from 'ember-decorators/object'
+
+import {PropTypes} from 'ember-prop-types'
+const {Logger, ViewUtils} = Ember
 
 /**
  * List of valid values to pass into `design` propery
@@ -28,7 +33,7 @@ const validSizes = [
   'small'
 ]
 
-export default Component.extend(PropTypeMixin, {
+export default Component.extend({
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
@@ -44,10 +49,6 @@ export default Component.extend(PropTypeMixin, {
   classNameBindings: [
     'disabled',
     'extraClasses'
-  ],
-
-  classNames: [
-    'frost-button'
   ],
 
   layout,
@@ -66,7 +67,6 @@ export default Component.extend(PropTypeMixin, {
     autofocus: PropTypes.bool,
     design: PropTypes.oneOf(validDesignClasses),
     disabled: PropTypes.bool,
-    hook: PropTypes.string,
     icon: PropTypes.string,
     pack: PropTypes.string,
     priority: PropTypes.string,
@@ -74,16 +74,9 @@ export default Component.extend(PropTypeMixin, {
     text: PropTypes.string,
     title: PropTypes.string,
     type: PropTypes.string,
-    vertical: PropTypes.bool,
+    vertical: PropTypes.bool
 
     // state
-
-    // keywords
-    attributeBindings: PropTypes.arrayOf(PropTypes.string),
-    classNameBindings: PropTypes.arrayOf(PropTypes.string),
-    classNames: PropTypes.arrayOf(PropTypes.string),
-    layout: PropTypes.any,
-    tagName: PropTypes.string
   },
 
   /** @returns {Object} the default values for properties when not provided by consumer */
@@ -220,34 +213,19 @@ export default Component.extend(PropTypeMixin, {
   },
   /* eslint-enable complexity */
 
-  _getOnClickHandler () {
-    if (typeOf(this.attrs.onClick) === 'function') {
-      return this.attrs.onClick
-    }
-    // For the case when handler is passed from component property and converted
-    // into mutable cell
-    if (typeOf(this.attrs.onClick) === 'object' &&
-      typeOf(this.attrs.onClick.value) === 'function') {
-      return this.attrs.onClick.value
-    }
-  },
-
   // == DOM Events ============================================================
 
-  // FIXME: jsdoc
-  onclick: Ember.on('click', function (event) {
+  onclick: on('click', function (event) {
     if (!ViewUtils.isSimpleClick(event)) {
       return true
     }
 
-    const onClickHandler = this._getOnClickHandler()
-    if (onClickHandler && !get(this, 'disabled')) {
-      onClickHandler(get(this, 'id'))
+    if (this.onClick && !this.get('disabled')) {
+      this.onClick(this.get('id'))
     }
   }),
 
-  // FIXME: jsdoc
-  _onFocus: Ember.on('focusIn', function (e) {
+  _onFocus: on('focusIn', function (e) {
     // If an onFocus handler is defined, call it
     if (this.attrs.onFocus) {
       this.attrs.onFocus()

@@ -1,13 +1,12 @@
 /**
  * Component definition for the frost-select-outlet component
  */
-import Ember from 'ember'
-const {Component} = Ember
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
 
 import layout from '../templates/components/frost-select-outlet'
+import Component from './frost-component'
+import {PropTypes} from 'ember-prop-types'
 
-export default Component.extend(PropTypeMixin, {
+export default Component.extend({
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
@@ -17,23 +16,13 @@ export default Component.extend(PropTypeMixin, {
 
   // == PropTypes =============================================================
 
-  /**
-   * Properties for this component. Options are expected to be (potentially)
-   * passed in to the component. State properties are *not* expected to be
-   * passed in/overwritten.
-   */
   propTypes: {
     // options
-    name: PropTypes.string,
+    name: PropTypes.string
 
     // state
-
-    // keywords
-    layout: PropTypes.any,
-    tagName: PropTypes.string
   },
 
-  /** @returns {Object} the default property values when not provided by consumer */
   getDefaultProps () {
     return {
       name: 'frost-select'

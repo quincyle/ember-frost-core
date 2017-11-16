@@ -1,7 +1,7 @@
 <div class="dummy-notification-container">
-{{#each notifications as |notification|}}
-  {{notification-message notification=notification}}
-{{/each}}
+  {{#each notifications as |notification|}}
+    {{notification-message notification=notification}}
+  {{/each}}
 </div>
 
 <div class="dummy-body textarea area">
@@ -10,14 +10,16 @@
   <hr>
   <div class="section">
     <div class="example">
-        <div class="demo">
-          {{! BEGIN-SNIPPET textarea }}
-          {{frost-textarea}}
-          {{! END-SNIPPET }}
-        </div>
-        <div class="snippet">
-          {{code-snippet name='textarea.hbs'}}
-        </div>
+      <div class="demo">
+        {{! BEGIN-SNIPPET textarea }}
+        {{frost-textarea
+          hook='myTextarea'
+        }}
+        {{! END-SNIPPET }}
+      </div>
+      <div class="snippet">
+        {{code-snippet name='textarea.hbs'}}
+      </div>
     </div>
   </div>
 
@@ -45,6 +47,7 @@
         {{! BEGIN-SNIPPET textarea-disabled }}
         {{frost-textarea
           disabled=true
+          hook='myTextarea'
         }}
         {{! END-SNIPPET }}
       </div>
@@ -58,8 +61,9 @@
       <div class="demo">
         {{! BEGIN-SNIPPET textarea-readonly }}
         {{frost-textarea
-          value='readonly'
+          hook='myTextarea'
           readonly=true
+          value='readonly'
         }}
         {{! END-SNIPPET }}
       </div>
@@ -74,17 +78,18 @@
   <hr>
   <div class="section">
     <div class="example">
-        <div class="title">placeholder</div>
-        <div class="demo">
-          {{! BEGIN-SNIPPET textarea-placeholder }}
-          {{frost-textarea
-            placeholder='Text goes here!'
-          }}
-          {{! END-SNIPPET }}
-        </div>
-        <div class="snippet">
-          {{code-snippet name='textarea-placeholder.hbs'}}
-        </div>
+      <div class="title">placeholder</div>
+      <div class="demo">
+        {{! BEGIN-SNIPPET textarea-placeholder }}
+        {{frost-textarea
+          hook='myTextarea'
+          placeholder='Text goes here!'
+        }}
+        {{! END-SNIPPET }}
+      </div>
+      <div class="snippet">
+        {{code-snippet name='textarea-placeholder.hbs'}}
+      </div>
     </div>
 
     <div class="example">
@@ -93,6 +98,7 @@
         {{! BEGIN-SNIPPET textarea-cols&rows }}
         {{frost-textarea
           cols=80
+          hook='myTextarea'
           rows=6
         }}
         {{! END-SNIPPET }}
@@ -107,6 +113,7 @@
       <div class="demo">
         {{! BEGIN-SNIPPET textarea-tabindex }}
         {{frost-textarea
+          hook='myTextarea'
           placeholder='Un-tabbable'
           tabindex=-1
         }}
@@ -118,11 +125,12 @@
     </div>
 
     <div class="example">
-    <div class="title">autofocus</div>
+      <div class="title">autofocus</div>
       <div class="demo">
         {{! BEGIN-SNIPPET textarea-autofocus }}
         {{frost-textarea
           autofocus=true
+          hook='myTextarea'
         }}
         {{! END-SNIPPET }}
       </div>
@@ -136,6 +144,7 @@
       <div class="demo">
         {{! BEGIN-SNIPPET textarea-value }}
         {{frost-textarea
+          hook='myTextarea'
           value='value'
         }}
         {{! END-SNIPPET }}
@@ -154,6 +163,7 @@
       <div class="demo">
         {{! BEGIN-SNIPPET textarea-dom-events }}
         {{frost-textarea
+          hook='myTextarea'
           onChange=(action 'event')
           onClick=(action 'event')
           onContextMenu=(action 'event')
@@ -185,7 +195,7 @@
         {{! END-SNIPPET }}
       </div>
       <div class="snippet">
-         <div>Template</div>
+        <div>Template</div>
         {{code-snippet name='textarea-dom-events.hbs'}}
         <br>
         <div>Controller</div>
@@ -198,6 +208,7 @@
       <div class="demo">
         {{! BEGIN-SNIPPET textarea-support-events }}
         {{frost-textarea
+          hook='myTextarea'
           onEnter=(action 'support' 'enter')
           onEscape=(action 'support' 'escape')
         }}
@@ -209,6 +220,27 @@
         <br>
         <div>Controller</div>
         {{code-snippet name='textarea-support-events.js'}}
+      </div>
+    </div>
+  </div>
+  <div class='section-title'>Other</div>
+  <hr>
+  <div class='section'>
+    <div class='example'>
+      <div class='title'>Spread</div>
+      <div class='demo'>
+        {{! BEGIN-SNIPPET area-other-spread }}
+        {{frost-textarea
+          options=(hash
+            disabled=true
+            hook='myTextarea'
+            value='this is my text area'
+          )
+        }}
+        {{! END-SNIPPET }}
+      </div>
+      <div class='snippet'>
+        {{code-snippet name='area-other-spread.hbs'}}
       </div>
     </div>
   </div>

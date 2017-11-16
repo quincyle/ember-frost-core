@@ -1,15 +1,25 @@
 /**
  * Component definition for frost-select-dropdown component
  */
-import Ember from 'ember'
-const {$, Component, get} = Ember
-import computed, {readOnly} from 'ember-computed-decorators'
-import {task, timeout} from 'ember-concurrency'
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
 
+import {deprecate} from '@ember/application/deprecations'
+import {isArray} from '@ember/array'
+import {get} from '@ember/object'
+import {merge} from '@ember/polyfills'
+import {htmlSafe} from '@ember/string'
+import {isEmpty} from '@ember/utils'
+import {task, timeout} from 'ember-concurrency'
+import {computed, readOnly} from 'ember-decorators/object'
+import {PropTypes} from 'ember-prop-types'
+import $ from 'jquery'
+
+import '../polyfills/replaceWith'
 import layout from '../templates/components/frost-select-dropdown'
 import {keyCodes} from '../utils'
-const {DOWN_ARROW, ENTER, ESCAPE, UP_ARROW} = keyCodes
+import {trimLongDataInElement} from '../utils/text'
+import Component from './frost-component'
+
+const {DOWN_ARROW, ENTER, ESCAPE, TAB, UP_ARROW} = keyCodes
 
 const BORDER_HEIGHT = 1
 const ARROW_HEIGHT = 12
@@ -17,7 +27,7 @@ const ARROW_WIDTH = 25
 const FPS = 1000 / 60 // Update at 60 frames per second
 const WINDOW_SPACE = 20
 
-export default Component.extend(PropTypeMixin, {
+export default Component.extend({
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
@@ -41,23 +51,25 @@ export default Component.extend(PropTypeMixin, {
     onClose: PropTypes.func.isRequired,
     onFilterInput: PropTypes.func.isRequired,
     onSelect: PropTypes.func.isRequired,
-    receivedHook: PropTypes.string.isRequired,
+    receivedHook: PropTypes.string,
     selectedItems: PropTypes.arrayOf(PropTypes.object),
+    wrapLabels: PropTypes.bool,
 
     // state
-    bottom: PropTypes.number,
+    bottom: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string
+    ]),
     focusedIndex: PropTypes.number,
     left: PropTypes.number,
     maxHeight: PropTypes.number,
-    top: PropTypes.number,
-    width: PropTypes.number,
-
-    // keywords
-    layout: PropTypes.any,
-    tagName: PropTypes.string
+    top: PropTypes.oneOfType([
+      PropTypes.number,
+      PropTypes.string
+    ]),
+    width: PropTypes.number
   },
 
-  /** @returns {Object} the default property values when not provided by consumer */
   getDefaultProps () {
     return {
       // options
@@ -73,10 +85,62 @@ export default Component.extend(PropTypeMixin, {
   },
 
   // == Computed Properties ===================================================
+  @readOnly
+  @computed('wrapLabels')
+  /**
+   * The class names for the frost-select drop down
+   * @param {Boolean} wrapLabels - whether or not select option text should wrap
+   * @returns {string} the class names for the frost-select drop down
+   */
+  dropdownClassNames (wrapLabels) {
+    const classNames = ['frost-select-dropdown']
+    if (wrapLabels) {
+      classNames.push('frost-select-dropdown-wrap-labels')
+    }
+    return classNames.join(' ')
+  },
+
+  @readOnly
+  @computed('multiselect')
+  /**
+   * The class names for the frost select dropdown options
+   * @param {Boolean} multiSelect - whether or not this is a multiselect
+   * @returns {string} the class names for the frost select dropdown options
+   */
+  dropdownTextClassNames (multiSelect) {
+    const classNames = ['frost-select-list-item-text']
+    if (multiSelect) {
+      classNames.push('frost-multi-select-list-item-text')
+    }
+    return classNames.join(' ')
+  },
+
+  @readOnly
+  @computed('multiselect')
+  /**
+   * The class names for the frost select dropdown secondary options
+   * @param {Boolean} multiSelect - whether or not this is a multiselect
+   * @returns {string} the class names for the frost select dropdown secondary options
+   */
+  dropdownSecondaryLabelsTextClassNames (multiSelect) {
+    const classNames = ['frost-select-list-secondary-item-text']
+    if (multiSelect) {
+      classNames.push('frost-multi-select-list-secondary-item-text')
+    }
+    return classNames.join(' ')
+  },
 
   @readOnly
   @computed('bottom', 'left', 'maxHeight', 'top', 'width')
-  // FIXME: jsdoc
+  /**
+   * Get inline style to properly position dropdown relative to select input
+   * @param {Number} bottom - bottom position of dropdown
+   * @param {Number} left - left position of dropdown
+   * @param {Number} maxHeight - max height of dropdown
+   * @param {Number} top - top position of dropdown
+   * @param {Number} width - width of dropdown
+   * @returns {Handlebars.SafeString} position style/CSS for dropdown
+   */
   listStyle (bottom, left, maxHeight, top, width) {
     if (bottom !== 'auto') {
       bottom = `${bottom}px`
@@ -95,12 +159,19 @@ export default Component.extend(PropTypeMixin, {
     ]
       .join(';')
 
-    return Ember.String.htmlSafe(style)
+    return htmlSafe(style)
   },
 
   @readOnly
   @computed('bottom', 'left', 'top', 'width')
-  // FIXME: jsdoc
+  /**
+   * Get inline style to properly position arrow that connects dropdown to
+   * @param {Number} bottom - bottom position of arrow
+   * @param {Number} left - left position of arrow
+   * @param {Number} top - top position of arrow
+   * @param {Number} width - width of arrow
+   * @returns {Handlebars.SafeString} position style/CSS for arrow
+   */
   arrowStyle (bottom, left, top, width) {
     const style = [
       `left:${left + (width - ARROW_WIDTH) / 2}px`
@@ -112,12 +183,18 @@ export default Component.extend(PropTypeMixin, {
       style.push(`bottom:${bottom - ARROW_HEIGHT + BORDER_HEIGHT}px`)
     }
 
-    return Ember.String.htmlSafe(style.join(';'))
+    return htmlSafe(style.join(';'))
   },
 
   @readOnly
   @computed('focusedIndex', 'items', 'selectedItems')
-  // FIXME: jsdoc
+  /**
+   * Get render items
+   * @param {Number} focusedIndex - index of focused item
+   * @param {Array<Object>} items - items to render in select dropdown
+   * @param {Array<Object>} selectedItems - items that are currently selected
+   * @returns {Array<Object>} render items
+   */
   renderItems (focusedIndex, items, selectedItems) {
     if (!items) {
       return []
@@ -127,18 +204,33 @@ export default Component.extend(PropTypeMixin, {
       const classNames = ['frost-select-list-item']
       const value = get(item, 'value')
       const isSelected = selectedItems.find((item) => item.value === value) !== undefined
+      const secondaryLabels = get(item, 'secondaryLabels')
 
-      if (index === focusedIndex) {
-        classNames.push('frost-select-list-item-focused')
+      if (!isEmpty(secondaryLabels)) {
+        classNames.push('frost-select-list-secondary-item')
       }
 
       if (isSelected) {
         classNames.push('frost-select-list-item-selected')
       }
 
+      if (index === focusedIndex) {
+        classNames.push('frost-select-list-item-focused')
+      }
+
       return {
         className: classNames.join(' '),
         label: get(item, 'label'),
+        secondaryLabels: secondaryLabels,
+        hasSecondaryLabels: isArray(secondaryLabels),
+        @readOnly
+        @computed('secondaryLabels', 'hasSecondaryLabels')
+        displaySecondaryLabels (secondaryLabels, hasSecondaryLabels) {
+          if (hasSecondaryLabels) {
+            return secondaryLabels.join(' | ')
+          }
+          return ''
+        },
         selected: isSelected,
         value: get(item, 'value')
       }
@@ -147,14 +239,39 @@ export default Component.extend(PropTypeMixin, {
 
   @readOnly
   @computed('items')
-  // FIXME: jsdoc
+  /**
+   * Whether or not to show message for when no items are present
+   * @param {Array<Object>} items - items
+   * @returns {Boolean} whether or not to show empty message
+   */
   showEmptyMessage (items) {
     return !items || items.length === 0
   },
 
   // == Functions =============================================================
 
-  // FIXME: jsdoc
+  /**
+   * Bind event listeners to items in dropdown
+   * @param {HTMLElement} dropdownListElement - dropdown list element (ul)
+   */
+  _addListItemEventListeners (dropdownListElement) {
+    const listItemElements = dropdownListElement.querySelectorAll('li')
+
+    Array.from(listItemElements).forEach((li, index) => {
+      $(li)
+        .mousedown(() => {
+          if (this.isDestroyed || this.isDestroying) return
+          const value = this.get(`items.${index}.value`)
+          this.set('focusedIndex', index)
+          this.send('selectItem', value)
+        })
+        .mouseenter(() => {
+          if (this.isDestroyed || this.isDestroying) return
+          this.set('focusedIndex', index)
+        })
+    })
+  },
+
   _getElementDimensionsAndPosition ($element) {
     const height = $element.height()
     const offset = $element.offset()
@@ -171,28 +288,41 @@ export default Component.extend(PropTypeMixin, {
     }
   },
 
-  // FIXME: jsdoc
   _handleArrowKey (upArrow) {
-    const focusedIndex = this.get('focusedIndex')
+    let focusedIndex = this.get('focusedIndex')
+
     const items = this.get('items')
     const newFocusedIndex = (
       upArrow ? Math.max(0, focusedIndex - 1) : Math.min(items.length - 1, focusedIndex + 1)
     )
 
     if (newFocusedIndex !== undefined && newFocusedIndex !== focusedIndex) {
+      const listItems = document.querySelectorAll('.frost-select-list-item')
+      const newFocusedListItem = listItems[newFocusedIndex]
+
       this.set('focusedIndex', newFocusedIndex)
 
-      const $focusedListItem = $('.frost-select-list-item').eq(newFocusedIndex)
-
       if (newFocusedIndex === 0) {
-        $('.frost-select-dropdown')[0].scrollTop = 0
+        document.getElementById('frost-select-list').scrollTop = 0
+      } else if (newFocusedListItem.scrollIntoViewIfNeeded) {
+        newFocusedListItem.scrollIntoViewIfNeeded(false)
       } else {
-        $focusedListItem[0].scrollIntoView(upArrow)
+        newFocusedListItem.scrollIntoView(upArrow)
       }
     }
   },
 
-  // FIXME: jsdoc
+  _handleEnterKey () {
+    const items = this.get('items') || []
+    const focusedIndex = this.get('focusedIndex')
+    this.send('selectItem', items[focusedIndex].value)
+  },
+
+  /**
+   * Get necessary property values for positioning dropdown above select
+   * @param {Number} top - top position of select
+   * @returns {Object} property values
+   */
   _positionAboveInput (top) {
     const bottom = $(window).height() - top + $(document).scrollTop() + ARROW_HEIGHT + BORDER_HEIGHT
 
@@ -207,7 +337,12 @@ export default Component.extend(PropTypeMixin, {
     }
   },
 
-  // FIXME: jsdoc
+  /**
+   * Get necessary property values for positioning dropdown below select
+   * @param {Number} height - height of select
+   * @param {Number} top - top position of select
+   * @returns {Object} property values
+   */
   _positionBelowInput (height, top) {
     // Make sure dropdown is rendered below input and we leave space for arrow
     // that connects dropdown to input
@@ -224,8 +359,24 @@ export default Component.extend(PropTypeMixin, {
     }
   },
 
-  // FIXME: jsdoc
+  /**
+   * Unbind event listeners to items in dropdown
+   * @param {HTMLElement} dropdownListElement - dropdown list element (ul)
+   */
+  _removeListItemEventListeners (dropdownListElement) {
+    const listItemElements = dropdownListElement.querySelectorAll('li')
+
+    Array.from(listItemElements).forEach((li, index) => {
+      $(li)
+        .off('mousedown')
+        .off('mouseenter')
+    })
+  },
+
+  /* eslint-disable complexity */
   _updatePosition ($element) {
+    if (this.isDestroyed || this.isDestroying) return {}
+
     $element = $element.first()
 
     const {center, height, left, top, width} = this._getElementDimensionsAndPosition($element)
@@ -242,26 +393,71 @@ export default Component.extend(PropTypeMixin, {
       props.width = width
     }
 
-    if (
-      Object.keys(props).length !== 0 &&
-      !this.get('isDestroyed') &&
-      !this.get('isDestroying')
-    ) {
-      this.setProperties(props)
+    return props
+  },
+  /* eslint-enable complexity */
+
+  _updateText () {
+    const filter = this.get('filter')
+    const dropdownListElement = document.getElementById('frost-select-list')
+    const clonedDropdownListElement = dropdownListElement.cloneNode(true)
+    const clonedTextElements = clonedDropdownListElement.querySelectorAll('.frost-select-list-item-text')
+    const textElements = dropdownListElement.querySelectorAll('.frost-select-list-item-text')
+    const clonedSecondaryTextElements = clonedDropdownListElement
+      .querySelectorAll('.frost-select-list-secondary-item-text')
+    const secondaryTextElements = dropdownListElement.querySelectorAll('.frost-select-list-secondary-item-text')
+    const scrollTop = dropdownListElement.scrollTop
+    const wrapLabels = this.get('wrapLabels')
+    const updateText = function (texElements, clonedTextElements) {
+      Array.from(texElements).forEach((textElement, index) => {
+        if (!wrapLabels) {
+          const clonedTextElement = clonedTextElements[index]
+          const updatedData = trimLongDataInElement(clonedTextElement)
+
+          if (updatedData) {
+            textElement.textContent = updatedData.text
+            textElement.setAttribute('title', updatedData.tooltip)
+          }
+        }
+
+        if (filter) {
+          const pattern = new RegExp(filter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+          const textWithMatch = textElement.textContent.replace(pattern, '<u>$&</u>')
+
+          // If rendered text has changed, update it
+          if (textElement.innerHTML !== textWithMatch) {
+            textElement.innerHTML = textWithMatch
+          }
+        }
+      })
     }
+
+    this._removeListItemEventListeners(dropdownListElement)
+
+    dropdownListElement.replaceWith(clonedDropdownListElement)
+
+    updateText(textElements, clonedTextElements)
+    updateText(secondaryTextElements, clonedSecondaryTextElements)
+
+    clonedDropdownListElement.replaceWith(dropdownListElement)
+
+    this._addListItemEventListeners(dropdownListElement)
+
+    // Make sure we scroll back to where the user was
+    document.getElementById('frost-select-list').scrollTop = scrollTop
   },
 
   // == Tasks =================================================================
 
-  // FIXME: jsdoc
   updateTask: task(function * () {
     this._isUpdating = true
 
     while (Date.now() - this._lastInteraction < 250) {
-      const $element = get(this.attrs, '$element.value')
+      const $element = get(this.attrs, '$element.value') || get(this.attrs, '$element')
 
       if ($element) {
-        this._updatePosition($element)
+        const props = this._updatePosition($element)
+        this.setProperties(props)
       }
 
       yield timeout(FPS)
@@ -274,16 +470,34 @@ export default Component.extend(PropTypeMixin, {
 
   // == Lifecycle Hooks =======================================================
 
-  /* Ember.Component method */
-  didReceiveAttrs (attrs) {
-    const $element = get(attrs, 'newAttrs.$element.value')
+  didReceiveAttrs () {
+    const $element = this.get('$element')
+    let props = {}
 
     if ($element) {
-      this._updatePosition($element)
+      props = merge(props, this._updatePosition($element))
+    }
+
+    const receivedHook = this.get('receivedHook')
+
+    if (receivedHook && receivedHook !== this.get('hook')) {
+      deprecate(
+        'receivedHook has been deprecated in favor of hook',
+        false,
+        {
+          id: 'receivedHook-deprecated',
+          until: '2.0.0'
+        }
+      )
+
+      props.hook = receivedHook
+    }
+
+    if (Object.keys(props).length !== 0) {
+      this.setProperties(props)
     }
   },
 
-  /* Ember.Component method */
   didInsertElement () {
     $('.frost-select-dropdown .frost-text-input').focus() // Focus on filter
 
@@ -295,7 +509,10 @@ export default Component.extend(PropTypeMixin, {
       }
     }
 
+    /* eslint-disable complexity */
     this._keyDownHandler = (e) => {
+      if (this.isDestroyed || this.isDestroying) return
+
       if ([DOWN_ARROW, UP_ARROW].indexOf(e.keyCode) !== -1) {
         e.preventDefault() // Keep arrow keys from scrolling document
         this._handleArrowKey(e.keyCode === UP_ARROW)
@@ -303,24 +520,33 @@ export default Component.extend(PropTypeMixin, {
 
       switch (e.keyCode) {
         case ENTER:
-          const items = this.get('items') || []
-          const focusedIndex = this.get('focusedIndex')
-          this.send('selectItem', items[focusedIndex].value)
+          this._handleEnterKey()
           return
 
         case ESCAPE:
           this.get('onClose')()
           return
+
+        case TAB:
+          this.get('onClose')()
+          return // eslint-disable-line no-useless-return
       }
     }
+    /* eslint-enable complexity */
 
     $(window).on('resize', this._updateHandler)
     $(document).on('scroll', this._updateHandler)
     $(document).on('keydown', this._keyDownHandler)
   },
 
-  /* Ember.Component method */
+  didRender () {
+    this._super(...arguments)
+    this._updateText()
+  },
+
   willDestroyElement () {
+    const dropdownListElement = document.getElementById('frost-select-list')
+    this._removeListItemEventListeners(dropdownListElement)
     $(window).off('resize', this._updateHandler)
     $(document).off('scroll', this._updateHandler)
     $(document).off('keydown', this._keyDownHandler)
@@ -329,7 +555,6 @@ export default Component.extend(PropTypeMixin, {
   // == Actions ===============================================================
 
   actions: {
-    // FIXME: jsdoc
     clear (e) {
       this.get('onSelect')([])
 
@@ -338,30 +563,11 @@ export default Component.extend(PropTypeMixin, {
       $('.frost-select-dropdown .frost-text-input').focus()
     },
 
-    // FIXME: jsdoc
-    focusOnItem (item) {
-      const value = get(item, 'value')
-      const items = this.get('items')
-
-      if (!items) {
-        return
-      }
-
-      for (let i = 0; i < items.length; i++) {
-        if (get(items[i], 'value') === value) {
-          this.set('focusedIndex', i)
-          break
-        }
-      }
-    },
-
-    // FIXME: jsdoc
     mouseDown (e) {
       // This keeps the overlay from swallowing clicks on the clear button
       e.preventDefault()
     },
 
-    // FIXME: jsdoc
     selectItem (value) {
       // Single select
       if (!this.get('multiselect')) {
@@ -378,6 +584,8 @@ export default Component.extend(PropTypeMixin, {
       } else {
         selectedValue.splice(index, 1)
       }
+
+      this.rerender()
 
       this.get('onSelect')(selectedValue)
 

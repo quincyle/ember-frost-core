@@ -48,11 +48,16 @@ based icon packs. The default path for dummy apps is
 
 ### Inline SVG rendering
 
-You may wish to have the svg in the DOM, so it can be controlled with JavaScript from the same document without having to do a request to GET the svg.
+You may wish to have the svg in the DOM, so it can be controlled with JavaScript from the same document
+without having to do a request to GET the svg.
 
-`ember-frost-core` provides a configuration option that causes [svg4everybody](https://github.com/jonathantneal/svg4everybody) to always render the svg inline, rather than providing a reference.
+`ember-frost-core` provides a configuration option that causes
+[svg4everybody](https://github.com/jonathantneal/svg4everybody) to always render the svg inline,
+rather than providing a reference.
 
-In [config/environment.js](https://github.com/ciena-frost/ember-frost-core/blob/master/tests/dummy/config/environment.js#L14-L16) place the following object in `EmberENV`:
+In [config/environment.js]
+(https://github.com/ciena-frost/ember-frost-core/blob/master/tests/dummy/config/environment.js#L14-L16)
+place the following object in `EmberENV`:
 
 ```javascript
 iconPacks: {
@@ -82,9 +87,17 @@ SVGs versus icon fonts.
 
 | Name   | Description | Default |
 | ------ | ----------- | ----------- |
+| `hook` | the name used for testing with ember-hook | - |
 | `icon` | the name of the icon to display | - |
+| `options` | `object` | `{<attributes>}` | property object used to spread the attributes to the top level of the component with ember-spread. |
 | `pack` | the name of the icon pack to load | frost |
-| `hook` | the name used for testing with ember-hook | - | 
+
+## Testing with ember-hook
+The icon component is accessible using ember-hook:
+* Top level hook - `$hook('<hook-name>')`
+
+## Spread attributes
+The icon component use ember-spread to `spread` a property object against the top level of the component.
 
 ## Examples
 
@@ -112,4 +125,14 @@ SVGs versus icon fonts.
 
 ```handlebars
 {{frost-icon icon='close'}}
+```
+
+### Spread
+```handlebars
+{{frost-icon
+  options=(hash
+    pack='frost'
+    icon='add'
+  )
+}}
 ```

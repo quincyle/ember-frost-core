@@ -8,7 +8,7 @@ $disabled-border: 1px solid $frost-color-input-disabled-border;
 $disabled-bg: $frost-color-input-disabled-bg;
 $font-size: $frost-font-m;
 $height: 35px;
-$padding: 0 30 0 8px;
+$padding: 0 30px 0 8px;
 
 .frost-text {
   display: block;
@@ -16,13 +16,13 @@ $padding: 0 30 0 8px;
   min-width: 175px;
 
   &.is-clear-visible {
-    &.frost-text-clear {
+    .frost-text-clear {
       opacity: 1;
     }
   }
 
   &.is-clear-enabled {
-    &.frost-text-clear {
+    .frost-text-clear {
       cursor: pointer;
       pointer-events: auto;
     }
@@ -67,6 +67,12 @@ $padding: 0 30 0 8px;
 
   &:read-only {
     border: 0;
+  }
+
+  // Note: without this Firefox ends up applying the read-only pseudo selector
+  // to number inputs which causes them not to get a border.
+  &[type='number'] {
+    border: 1px solid $frost-color-input-border;
   }
 
   &:disabled {

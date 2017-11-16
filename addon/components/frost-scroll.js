@@ -1,42 +1,22 @@
 /**
  * Component definition for frost-scroll component
  */
-import Ember from 'ember'
-const {Component, deprecate, run, typeOf} = Ember
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
 
-export default Component.extend(PropTypeMixin, {
+import {deprecate} from '@ember/application/deprecations'
+import {run} from '@ember/runloop'
+import {typeOf} from '@ember/utils'
+import Component from './frost-component'
+import {PropTypes} from 'ember-prop-types'
+
+export default Component.extend({
 
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
 
-  classNames: ['frost-scroll'],
-
   // == PropTypes =============================================================
-
-  /**
-   * Properties for this component. Options are expected to be (potentially)
-   * passed in to the component. State properties are *not* expected to be
-   * passed in/overwritten.
-   */
   propTypes: {
-    // options
-    hook: PropTypes.string,
-
-    // state
-
-    // keywords
-    classNames: PropTypes.arrayOf(PropTypes.string)
-  },
-
-  /** @returns {Object} the default property values when not provided by consumer */
-  getDefaultProps () {
-    return {
-      // options
-
-      // state
-    }
+    onMouseEnter: PropTypes.func
   },
 
   // == Computed Properties ===================================================
@@ -54,7 +34,9 @@ export default Component.extend(PropTypeMixin, {
     const debouncePeriod = 150
 
     run.scheduleOnce('afterRender', this, () => {
-      window.Ps.initialize(this.$()[0])
+      if (!this.isDestroying && !this.isDestroyed) {
+        window.Ps.initialize(this.$()[0], this.get('psOptions') || {})
+      }
     })
 
     this._legacyScrollYEndHandler = () => {
@@ -77,6 +59,22 @@ export default Component.extend(PropTypeMixin, {
       run.debounce(this, this.onScrollYStart, debouncePeriod, true)
     }
 
+    this._scrollXHandler = () => {
+      run.debounce(this, this.onScrollX, debouncePeriod, true)
+    }
+
+    this._scrollRightHandler = () => {
+      run.debounce(this, this.onScrollRight, debouncePeriod, true)
+    }
+
+    this._scrollLeftHandler = () => {
+      run.debounce(this, this.onScrollLeft, debouncePeriod, true)
+    }
+
+    this._mouseEnterHandler = () => {
+      this.get('onMouseEnter')(this.get('element'))
+    }
+
     if (typeOf(this.onScrollUp) === 'function') {
       this.$().on('ps-scroll-up', this._scrollUpHandler)
     }
@@ -93,7 +91,23 @@ export default Component.extend(PropTypeMixin, {
       this.$().on('ps-y-reach-end', this._scrollYEndHandler)
     }
 
-    if (typeOf(this.attrs['on-scroll-y-end']) === 'function') {
+    if (typeOf(this.onScrollX) === 'function') {
+      this.$().on('ps-scroll-x', this._scrollXHandler)
+    }
+
+    if (typeOf(this.onScrollRight) === 'function') {
+      this.$().on('ps-scroll-right', this._scrollRightHandler)
+    }
+
+    if (typeOf(this.onScrollLeft) === 'function') {
+      this.$().on('ps-scroll-left', this._scrollLeftHandler)
+    }
+
+    if (typeOf(this.get('onMouseEnter')) === 'function') {
+      this.$().on('mouseenter', this._mouseEnterHandler)
+    }
+
+    if (typeOf(this['on-scroll-y-end']) === 'function') {
       deprecate('on-scroll-y-end has been deprecated in favor of onScrollYEnd',
         false,
         {
@@ -129,6 +143,22 @@ export default Component.extend(PropTypeMixin, {
     if (typeOf(this.onScrollYEnd) === 'function') {
       this.$().off('ps-y-reach-end', this._scrollYEndHandler)
     }
+
+    if (typeOf(this.onScrollX) === 'function') {
+      this.$().off('ps-scroll-x', this._scrollXHandler)
+    }
+
+    if (typeOf(this.onScrollRight) === 'function') {
+      this.$().off('ps-scroll-right', this._scrollRightHandler)
+    }
+
+    if (typeOf(this.onScrollLeft) === 'function') {
+      this.$().off('ps-scroll-left', this._scrollLeftHandler)
+    }
+
+    if (typeOf(this.get('onMouseEnter')) === 'function') {
+      this.$().off('mouseenter', this._mouseEnterHandler)
+    }
   },
   /* eslint-enable complexity */
 
@@ -136,18 +166,18 @@ export default Component.extend(PropTypeMixin, {
 
   // == Lifecycle Hooks =======================================================
 
-  /* Ember.Component method */
   didInsertElement () {
     this._super(...arguments)
     this._setupPerfectScroll()
   },
 
-  /* Ember.Component method */
   willDestroyElement () {
     this._super(...arguments)
     this._unregisterEvents()
   },
-
+  didRender () {
+    window.Ps.update(this.$()[0])
+  },
   // == Actions ===============================================================
 
   actions: {

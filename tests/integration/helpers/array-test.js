@@ -1,30 +1,26 @@
 import {expect} from 'chai'
-import {describeComponent, it} from 'ember-mocha'
+import {integration} from 'ember-test-utils/test-support/setup-component-test'
 import hbs from 'htmlbars-inline-precompile'
-import {beforeEach} from 'mocha'
+import {beforeEach, describe, it} from 'mocha'
 
-describeComponent(
-  'array',
-  'Integration: ArrayHelper',
-  {
-    integration: true
-  },
-  function () {
-    beforeEach(function () {
-      this.render(hbs`{{array 1 2 3}}`)
-    })
+const test = integration('array')
+describe(test.label, function () {
+  test.setup()
 
-    it('renders as expected', function () {
-      this.render(hbs`{{array 1 2 3}}`)
-      expect(this.$().text().trim()).to.be.equal('1,2,3')
-    })
+  beforeEach(function () {
+    this.render(hbs`{{array 1 2 3}}`)
+  })
 
-    it('use in loop', function () {
-      this.render(hbs`
-      {{#each (array 1 2 3) as |value|}}
-        <p class='value'>{{value}}</p>
-      {{/each}}`)
-      expect(this.$('.value')).to.have.length(3)
-    })
-  }
-)
+  it('should render as expected', function () {
+    this.render(hbs`{{array 1 2 3}}`)
+    expect(this.$().text().trim()).to.be.equal('1,2,3')
+  })
+
+  it('should work in loop', function () {
+    this.render(hbs`
+    {{#each (array 1 2 3) as |value|}}
+      <p class='value'>{{value}}</p>
+    {{/each}}`)
+    expect(this.$('.value')).to.have.length(3)
+  })
+})

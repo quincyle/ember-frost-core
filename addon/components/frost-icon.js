@@ -1,51 +1,37 @@
 /**
  * Component definition for frost-icon component
  */
-import Ember from 'ember'
-const {Component, deprecate, get} = Ember
-import computed, {readOnly} from 'ember-computed-decorators'
-import PropTypeMixin, {PropTypes} from 'ember-prop-types'
+
+import {deprecate} from '@ember/application/deprecations'
 
 import layout from '../templates/components/frost-icon'
+import Component from './frost-component'
+import {computed, readOnly} from 'ember-decorators/object'
+import {PropTypes} from 'ember-prop-types'
 
-export default Component.extend(PropTypeMixin, {
+export default Component.extend({
 
   // == Dependencies ==========================================================
 
   // == Keyword Properties ====================================================
 
   classNameBindings: ['iconClass'],
-  classNames: 'frost-icon',
   layout,
   tagName: 'svg',
 
   // == PropTypes =============================================================
 
-  /**
-   * Properties for this component. Options are expected to be (potentially)
-   * passed in to the component. State properties are *not* expected to be
-   * passed in/overwritten.
-   */
   propTypes: {
     // options
-    hook: PropTypes.string,
     pack: PropTypes.string,
-    icon: PropTypes.string.isRequired,
+    icon: PropTypes.string.isRequired
 
     // state
-
-    // keywords
-    classNameBindings: PropTypes.arrayOf(PropTypes.string),
-    classNames: PropTypes.arrayOf(PropTypes.string),
-    layout: PropTypes.any,
-    tagName: PropTypes.string
   },
 
-  /** @returns {Object} the default property values when not provided by consumer */
   getDefaultProps () {
     return {
       // options
-      icon: '',
       pack: 'frost'
 
       // state
@@ -72,9 +58,8 @@ export default Component.extend(PropTypeMixin, {
 
   // == Lifecycle Hooks =======================================================
 
-  /* Ember.Component method */
-  didReceiveAttrs (attrs) {
-    const icon = get(attrs, 'newAttrs.icon.value') || ''
+  didReceiveAttrs () {
+    const icon = this.get('icon') || ''
 
     deprecate(
       'nested icon paths have been deprecated in favor of flat icon packs',
