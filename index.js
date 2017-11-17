@@ -1,7 +1,7 @@
 /* globals module */
 
 // 'use strict'
-
+// changes
 const writeFile = require('broccoli-file-creator')
 const Funnel = require('broccoli-funnel')
 const mergeTrees = require('broccoli-merge-trees')
