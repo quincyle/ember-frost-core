@@ -34,13 +34,38 @@ export default Controller.extend({
       })
     },
 
+    onScrollX () {
+      this.get('notifications').success('Scrolled x axis', {
+        autoClear: true,
+        clearDuration: 2000
+      })
+    },
+
+    onScrollRight () {
+      this.get('notifications').success('Scrolled right', {
+        autoClear: true,
+        clearDuration: 2000
+      })
+    },
+
+    onScrollLeft () {
+      this.get('notifications').success('Scrolled left', {
+        autoClear: true,
+        clearDuration: 2000
+      })
+    },
+
     yEndReached () {
       this.get('notifications').success('Scroll reached end of y axis', {
         autoClear: true,
         clearDuration: 2000
       })
+    },
+
+    onMouseEnterHandler (element) {
+      element.innerHTML = 'mouse entered and will update the scrollbars'
+      window.Ps.update(element)
     }
   }
 })
 // END-SNIPPET scroll-controller
-
