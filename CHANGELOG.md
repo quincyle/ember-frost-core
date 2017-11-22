@@ -1,3 +1,159 @@
+# 3.1.0 (2017-11-08)
+
+* Added optional falseValue and trueValue properties to `frost-checkbox`
+
+
+# 3.0.1 (2017-11-06)
+* Fix frost-select-dropdown breaking in tests because `autorun loop is disabled`
+
+# 3.0.0 (2017-11-02)
+
+## WARNING: THIS REVERTS EMBER CLI 2.16.2 BACK TO 2.12.3
+
+We apologize for this change. Unfortunately, due to the internal needs of our organization this became a required action.
+
+The 2.16.2 changes are now located in the `ember-cli-2.16.2` branch and will hopefully be contained in a versioned release again in the future.
+
+# 2.0.2 (2017-10-25)
+* **Updated** version of `ember-decorators`
+* **Removed** code setting babel plugins inside `index.js` since it is no longer needed for `ember-decorators'
+
+
+# 2.0.1 (2017-10-25)
+* **Updated** to ensure that the `included` method's `this._super` call is properly bound to the context (fixes ember-decorators/ember-decorators#173).
+
+# 2.0.0 (2017-10-18)
+* **Updated** testing dependencies
+* **Updated** to Ember CLI 2.16.2 and babel 6
+* **Updated** to using ember-decorators which replaces ember-computed-decorators
+* **Updated** dependencies
+* **Updated** pr-bumber to version 3
+* **Updated** CONTRIBUTING.md file
+* **Updated** to using Ember Javascript Modules API https://github.com/ember-cli/ember-rfc176-data
+* **Updated** blueprints to latest versions of dependencies
+* **Updated** to use chrome headless in Travis CI
+* **Updated** to using Node 8.1.2 NPM 5
+* **Added** eslint-plugin-ember to enforce Ember Javascript Modules API syntax
+* **Removed** running of code coverage until issue is resolved with ember-cli-code-coverage: https://github.com/kategengler/ember-cli-code-coverage/issues/133
+* **Removed** running of ember-try its-2.12 scenario until issue is resolved: https://github.com/ember-cli/ember-try/issues/148
+* **Updated** blueprint helper tests to be commented out since in babel 6 CommonJS files are converted to AMD (which needs import of require) and then being transpiled.
+
+# 1.24.0 (2017-10-16)
+- Update colors to match Frost Visual Style Guide 1.624 (2017-09-12).  Added colors include named alarm colors, status colors, yellows, and browns.  Some colors were fixed to match the most recent versions.
+
+# 1.23.13 (2017-09-12)
+
+* Use ember-cli-notifications v4.2.1 - 4.2.0 was using a beta version of ember-css-modules
+
+
+# 1.23.12 (2017-09-11)
+* **Added** an optional **mouseenter** event for the ps-container to update which can then remove or add scrollbars
+
+
+# 1.23.11 (2017-08-17)
+
+* **Reduced** the height of buttons within an info bar from 75px to 60px
+* **Added** a right margin of 5px to buttons within an info bar to give them space from their right boundary
+* **Added** a 5px padding to the left and right sides of the info bar buttons so that the text of the buttons is not pushed right up against the boundary of the button
+* **Removed** padding on the text within the info bar
+* **Reduced** the bottom margin on the SVG elements in buttons within an info bar from 10px to 5px
+
+# 1.23.10 (2017-08-10)
+* **Updated** pin `ember-elsewhere` to pre-babel 6 version
+
+
+# 1.23.9 (2017-08-10)
+* **Updated** packages to reflect Ember CLI 2.12.x versions
+* **Updated** blueprints to match devDependency versions
+
+
+# 1.23.8 (2017-08-09)
+ * **Updated** the pink and lilac color palettes for better contrast
+
+
+# 1.23.7 (2017-08-08)
+
+* **Updated** dependency versions to match verions currently being installed
+* **Updated** `ember-cli-htmlbars-inline-precompile` to pin to version `0.3.12` until ember-cli/ember-cli-htmlbars-inline-precompile#90 is resolved. (See issue: https://github.com/ciena-frost/ember-frost-core/issues/488)
+* **Updated** `ember-cli-build.js` to `includePolyfill: true` for `ember-cli-babel` as part of issue: https://github.com/ciena-frost/ember-frost-core/issues/488
+
+# 1.23.6 (2017-07-20)
+
+* The JQuery creation of a canvas element was behaving oddly in some apps on Firefox.
+
+# 1.23.5 (2017-07-19)
+
+* **Added** Indigo, pink and lilac-4 to the color scheme
+
+
+# 1.23.4 (2017-07-14)
+
+* update svg foreverbody
+  * Fixes issues with `linearGradients` rendering
+
+
+# 1.23.3 (2017-07-10)
+
+* **Fixed** tests
+* **Removed** `ember-release` from `.travis.yml`
+
+
+# 1.23.2 (2017-07-07)
+* **Fixed** transpilation issue for ember-cli < 12.0.0
+
+
+# 1.23.1 (2017-07-05)
+* **Upgrade** to ember 2.12.3
+
+# 1.23.0 (2017-06-28)
+ * fix frost-scroll content size being reduced by calling perfect-scrollbar `update` when renders
+   * Fixes BPSO-54864
+
+
+
+
+# 1.22.5 (2017-06-27)
+* Added x-axis scroll event handlers to frost-scroll
+* Added tests for new scroll events
+
+# 1.22.4 (2017-06-19)
+
+Added style rules for the hover state of the frost-toggle button switch. The switch will now turn a light blue color when the user mouses over the toggle. If the toggle is disabled, the switch will not change color. 
+
+# 1.22.3 (2017-06-05)
+* **Removed** unneeded dependencies left over from when blueprints were moved to another repo: https://github.com/ciena-frost/ember-frost-core/pull/457/files
+* **Updated** ember-try config to correct syntax for `default`.
+
+# 1.22.2 (2017-06-01)
+  * Fix select search by escaping regex special characters. Fixes https://github.com/ciena-frost/ember-frost-core/issues/455
+
+# 1.22.1 (2017-05-31)
+* **Updated** the lgrey colours
+
+
+# 1.22.0 (2017-05-31)
+
+* **Added** `frost-expand` component and `frost-error` component
+
+
+# 1.21.3 (2017-05-30)
+
+ * **Moved** `ember-cli-frost-blueprints` from `dependencies` in `package.json` to being installed as a blueprint. It turns out that [`ember-cli` cheats w.r.t. `ember-cli-legacy-blueprints`](https://github.com/ember-cli/ember-cli/blob/v2.8.0/lib/models/project.js#L347) and so we can't follow that pattern (of just making it an `npm` dep). 
+
+# 1.21.2 (2017-05-30)
+
+* **Updated** `ember-cli-forst-blueprints` to `1.x`
+
+
+# 1.21.1 (2017-05-26)
+* Set notification z-index to appear above modals
+
+
+# 1.21.0 (2017-05-26)
+* **Removed** blueprints for generating tests, they are now provided by `ember-cli-frost-blueprints`
+* **Added** `ember-cli-frost-blueprints` to the `dependencies` so that the same blueprints are still available to consumers of this addon. 
+* **Fixed** [#374](https://github.com/ciena-frost/ember-frost-core/issues/374) by doing the above. 
+
 # 1.20.1 (2017-05-17)
 * **Updated** `ember` from `bower.json` to `ember-source` from `package.json`
 * **Updated** ember-try config matrix for `ember-source`

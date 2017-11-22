@@ -2,7 +2,6 @@
  * Component definition for frost-select-dropdown component
  */
 import Ember from 'ember'
-const {$, deprecate, get, isArray, isEmpty, merge} = Ember
 import computed, {readOnly} from 'ember-computed-decorators'
 import {task, timeout} from 'ember-concurrency'
 import {PropTypes} from 'ember-prop-types'
@@ -13,6 +12,7 @@ import {keyCodes} from '../utils'
 import {trimLongDataInElement} from '../utils/text'
 import Component from './frost-component'
 
+const {$, deprecate, get, isArray, isEmpty, merge, run} = Ember
 const {DOWN_ARROW, ENTER, ESCAPE, TAB, UP_ARROW} = keyCodes
 
 const BORDER_HEIGHT = 1
@@ -254,14 +254,18 @@ export default Component.extend({
     Array.from(listItemElements).forEach((li, index) => {
       $(li)
         .mousedown(() => {
-          if (this.isDestroyed || this.isDestroying) return
-          const value = this.get(`items.${index}.value`)
-          this.set('focusedIndex', index)
-          this.send('selectItem', value)
+          run(() => {
+            if (this.isDestroyed || this.isDestroying) return
+            const value = this.get(`items.${index}.value`)
+            this.set('focusedIndex', index)
+            this.send('selectItem', value)
+          })
         })
         .mouseenter(() => {
-          if (this.isDestroyed || this.isDestroying) return
-          this.set('focusedIndex', index)
+          run(() => {
+            if (this.isDestroyed || this.isDestroying) return
+            this.set('focusedIndex', index)
+          })
         })
     })
   },
@@ -415,7 +419,7 @@ export default Component.extend({
         }
 
         if (filter) {
-          const pattern = new RegExp(filter, 'gi')
+          const pattern = new RegExp(filter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
           const textWithMatch = textElement.textContent.replace(pattern, '<u>$&</u>')
 
           // If rendered text has changed, update it
@@ -464,15 +468,15 @@ export default Component.extend({
 
   // == Lifecycle Hooks =======================================================
 
-  didReceiveAttrs (attrs) {
-    const $element = get(attrs, 'newAttrs.$element.value')
+  didReceiveAttrs () {
+    const $element = this.get('$element')
     let props = {}
 
     if ($element) {
       props = merge(props, this._updatePosition($element))
     }
 
-    const receivedHook = get(attrs, 'newAttrs.receivedHook.value')
+    const receivedHook = this.get('receivedHook')
 
     if (receivedHook && receivedHook !== this.get('hook')) {
       deprecate(
@@ -496,35 +500,39 @@ export default Component.extend({
     $('.frost-select-dropdown .frost-text-input').focus() // Focus on filter
 
     this._updateHandler = () => {
-      this._lastInteraction = Date.now()
+      run(() => {
+        if (this.isDestroyed || this.isDestroying) return
+        this._lastInteraction = Date.now()
 
-      if (!this._isUpdating) {
-        this.get('updateTask').perform()
-      }
+        if (!this._isUpdating) {
+          this.get('updateTask').perform()
+        }
+      })
     }
 
     /* eslint-disable complexity */
     this._keyDownHandler = (e) => {
-      if (this.isDestroyed || this.isDestroying) return
+      run(() => {
+        if (this.isDestroyed || this.isDestroying) return
 
-      if ([DOWN_ARROW, UP_ARROW].indexOf(e.keyCode) !== -1) {
-        e.preventDefault() // Keep arrow keys from scrolling document
-        this._handleArrowKey(e.keyCode === UP_ARROW)
-      }
+        if ([DOWN_ARROW, UP_ARROW].indexOf(e.keyCode) !== -1) {
+          e.preventDefault() // Keep arrow keys from scrolling document
+          this._handleArrowKey(e.keyCode === UP_ARROW)
+        }
 
-      switch (e.keyCode) {
-        case ENTER:
-          this._handleEnterKey()
-          return
+        switch (e.keyCode) {
+          case ENTER:
+            this._handleEnterKey()
+            return
 
-        case ESCAPE:
-          this.get('onClose')()
-          return
+          case ESCAPE:
+            this.get('onClose')()
+            return
 
-        case TAB:
-          this.get('onClose')()
-          return
-      }
+          case TAB:
+            this.get('onClose')()
+        }
+      })
     }
     /* eslint-enable complexity */
 
